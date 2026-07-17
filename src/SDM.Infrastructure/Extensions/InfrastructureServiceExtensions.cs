@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SDM.Application.Interfaces;
 using SDM.Infrastructure.Persistence;
 using SDM.Infrastructure.Repositories;
+using SDM.Infrastructure.Services;
 
 namespace SDM.Infrastructure.Extensions;
 
@@ -14,7 +16,7 @@ namespace SDM.Infrastructure.Extensions;
 public static class InfrastructureServiceExtensions
 {
     /// <summary>
-    /// Registers the database context, repositories, and unit of work.
+    /// Registers the database context, repositories, unit of work, and shared services.
     /// </summary>
     public static IServiceCollection AddInfrastructureServices(
         this IServiceCollection services,
@@ -22,6 +24,7 @@ public static class InfrastructureServiceExtensions
     {
         services.AddDatabase(configuration);
         services.AddRepositories();
+        services.AddSharedServices();
 
         // SignalR — registered at API level via builder.Services.AddSignalR()
         // JWT     — registered at API level via builder.Services.AddAuthentication()
@@ -63,6 +66,20 @@ public static class InfrastructureServiceExtensions
 
         // Unit of Work — scoped per HTTP request
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        return services;
+    }
+
+    private static IServiceCollection AddSharedServices(this IServiceCollection services)
+    {
+        // Required for CurrentUserService to access HttpContext
+        services.AddHttpContextAccessor();
+
+        // Abstraction over system clock — injectable and testable
+        services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+
+        // Provides authenticated admin identity to Application layer handlers
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         return services;
     }

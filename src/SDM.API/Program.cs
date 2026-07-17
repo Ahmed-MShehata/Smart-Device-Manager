@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using SDM.Application.Extensions;
+using SDM.Application;
 using SDM.Infrastructure.Extensions;
 using SDM.Infrastructure.Hubs;
 using Serilog;

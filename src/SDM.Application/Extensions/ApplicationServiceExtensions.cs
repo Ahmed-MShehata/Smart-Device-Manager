@@ -1,17 +1,15 @@
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
 
 namespace SDM.Application.Extensions;
 
+/// <summary>
+/// Retained for backward compatibility with the API's service registration pipeline.
+/// Delegates to <see cref="DependencyInjection.AddApplicationServices"/>.
+/// </summary>
+[Obsolete("Use SDM.Application.DependencyInjection.AddApplicationServices() directly.")]
 public static class ApplicationServiceExtensions
 {
-    public static IServiceCollection AddApplicationServices(this IServiceCollection services)
-    {
-        services.AddMediatR(cfg =>
-        {
-            cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
-        });
-
-        return services;
-    }
+    /// <inheritdoc cref="DependencyInjection.AddApplicationServices"/>
+    public static IServiceCollection AddApplicationServicesLegacy(this IServiceCollection services)
+        => services.AddApplicationServices();
 }

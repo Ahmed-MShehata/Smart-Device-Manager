@@ -1,171 +1,433 @@
 # Smart Device Manager (SDM)
 
-## Database Design Document
+# Database Design
 
-## Version 1.0
+**Version:** 2.0  
+**Database Strategy:** Hybrid (Online + Offline)  
+**ORM:** Entity Framework Core 9  
+**Database Approach:** Code First
 
-# Database Strategy
+---
 
-The system uses two databases:
+# Database Overview
 
-## Server Database
+Smart Device Manager uses a hybrid database architecture.
 
-Technology: - SQL Server
+The system consists of two independent databases:
 
-Used for: - Admin management. - Products. - Orders. - Software
-packages. - Notifications. - Diagnostic rules. - System configuration.
+- SQL Server (Server Database)
+- SQLite (Client Database)
 
-## Client Database
+This architecture enables Offline-First functionality while maintaining centralized server management.
 
-Technology: - SQLite
+---
 
-Used for: - Offline operations. - Device information. - Local
-settings. - Diagnostic data. - Synchronization queue.
+# Database Architecture
 
-------------------------------------------------------------------------
++-----------------------------+
+| SQL Server                  |
+| Main Server Database        |
++-----------------------------+
 
-# Main Server Entities
+            ▲
+            │
+      ASP.NET Core API
 
-## AdminUsers
+            ▼
+
++-----------------------------+
+| SQLite                      |
+| Local Client Database       |
++-----------------------------+
+
+---
+
+# Server Database
+
+Technology
+
+- SQL Server
+- Entity Framework Core
+- Code First
+- Migrations
+
+Responsibilities
+
+- Products
+- Orders
+- Software Packages
+- System Components
+- Notifications
+- Settings
+- Diagnostic Rules
+- Administrator Accounts
+
+---
+
+# Client Database
+
+Technology
+
+- SQLite
+
+Responsibilities
+
+- Offline Storage
+- Device Information
+- Cached Diagnostic Rules
+- Installed Packages
+- Local Settings
+- Synchronization Queue
+
+---
+
+# Design Principles
+
+- Code First
+- Guid Primary Keys
+- Auditable Entities
+- Offline First
+- Repository Pattern
+- Unit of Work
+- Data Integrity
+
+---
+
+# Domain Entities
+
+## AdminUser
 
 Stores administrator accounts.
 
-Fields: - Id - Username - PasswordHash - Role - IsActive - CreatedAt
+Fields
 
-------------------------------------------------------------------------
+- Id
+- Username
+- PasswordHash
+- Role
+- IsActive
+- CreatedAt
 
-## Products
+---
 
-Stores products available for customers.
+## Product
 
-Fields: - Id - Name - Category - Brand - Description - Price -
-Discount - Quantity - Warranty - ImagePath - Status - CreatedAt
+Stores hardware products.
 
-------------------------------------------------------------------------
+Fields
 
-## Orders
+- Id
+- Name
+- Description
+- Category
+- Brand
+- Price
+- Discount
+- Quantity
+- WarrantyMonths
+- ImageUrl
+- Status
+- CreatedAt
+
+---
+
+## Order
 
 Stores customer orders.
 
-Fields: - Id - CustomerName - PhoneNumber - Address - DeviceId -
-Status - CreatedAt
+Fields
 
-------------------------------------------------------------------------
+- Id
+- CustomerContact
+- DeviceReference
+- Status
+- CreatedAt
 
-## OrderItems
+---
 
-Stores products inside orders.
+## OrderItem
 
-Fields: - Id - OrderId - ProductId - Quantity - Price
+Stores ordered products.
 
-Relationship: Order has many OrderItems.
+Fields
 
-------------------------------------------------------------------------
+- Id
+- OrderId
+- ProductId
+- Quantity
+- UnitPrice
 
-## SoftwarePackages
+---
 
-Stores application packages.
+## SoftwarePackage
 
-Fields: - Id - Name - Version - Category - Description - FilePath -
-SilentInstallCommand - DetectionMethod - SHA256 - Size - Status
+Stores software packages.
 
-------------------------------------------------------------------------
+Fields
 
-## SystemComponents
+- Id
+- Name
+- Version
+- Category
+- InstallerType
+- SilentInstallCommand
+- DetectionRule
+- SHA256
+- Size
+- RequiresRestart
+- Status
 
-Stores required Windows components.
+---
 
-Examples: - .NET Runtime - Visual C++ - DirectX
+## SystemComponent
 
-Fields: - Id - Name - Version - FilePath - SilentInstallCommand - SHA256
+Stores Windows components.
 
-------------------------------------------------------------------------
+Examples
 
-## DiagnosticCategories
+- .NET Runtime
+- Visual C++
+- DirectX
 
-Stores problem categories.
+---
 
-Examples: - Overheating - Performance - Network - Windows Problems
+## DiagnosticCategory
 
-------------------------------------------------------------------------
+Groups diagnostic questions.
 
-## DiagnosticQuestions
+---
+
+## DiagnosticQuestion
 
 Stores MCQ questions.
 
-Fields: - Id - CategoryId - QuestionText
+---
 
-------------------------------------------------------------------------
+## DiagnosticChoice
 
-## DiagnosticChoices
+Stores available answers.
 
-Stores possible answers.
+---
 
-Fields: - Id - QuestionId - ChoiceText - ScoreValue
+## DiagnosticRule
 
-------------------------------------------------------------------------
+Contains diagnosis logic and recommended solutions.
 
-## DiagnosticRules
+---
 
-Stores diagnosis logic.
+## Notification
 
-Fields: - Id - RuleCondition - Result - Solution
+Stores notifications.
 
-------------------------------------------------------------------------
+Fields
 
-## Notifications
+- Id
+- UserType
+- Title
+- Message
+- IsRead
+- IsPinned
+- CreatedAt
 
-Stores system notifications.
+---
 
-Fields: - Id - UserType - Title - Message - IsRead - CreatedAt
+## Setting
 
-------------------------------------------------------------------------
+Stores global system configuration.
 
-## Settings
+Examples
 
-Stores server configuration.
+- Company Information
+- WhatsApp Number
+- Support Phone
+- Application Settings
 
-Examples: - WhatsApp number. - Support phone. - Company information.
+---
 
-------------------------------------------------------------------------
+# Value Objects
 
-# Client SQLite Entities
+The Domain uses Value Objects for immutable business data.
+
+Current Value Objects
+
+- DeviceReference
+- CustomerContact
+
+Benefits
+
+- Immutable
+- Self-validating
+- Rich Domain Model
+
+---
+
+# Enums
+
+Common Enumerations include
+
+- ProductCategory
+- InstallerType
+- OrderStatus
+- NotificationType
+- UserRole
+
+---
+
+# Relationships
+
+Product
+
+↓
+
+OrderItem
+
+↓
+
+Order
+
+----------------------------
+
+DiagnosticCategory
+
+↓
+
+DiagnosticQuestion
+
+↓
+
+DiagnosticChoice
+
+----------------------------
+
+DiagnosticCategory
+
+↓
+
+DiagnosticRule
+
+---
+
+# Auditing
+
+All auditable entities contain
+
+- CreatedAt
+- UpdatedAt
+- CreatedBy
+- UpdatedBy
+
+---
+
+# Client SQLite Tables
 
 ## DeviceInfo
 
-Stores scanned hardware information.
+Stores hardware information.
 
-------------------------------------------------------------------------
+---
 
 ## LocalSettings
 
 Stores customer preferences.
 
-------------------------------------------------------------------------
+---
 
 ## LocalPackages
 
-Stores installed package status.
+Stores installed software status.
 
-------------------------------------------------------------------------
+---
 
 ## DiagnosticCache
 
-Stores offline diagnosis data.
+Stores downloaded diagnostic rules.
 
-------------------------------------------------------------------------
+---
 
 ## SyncQueue
 
-Stores operations waiting for server synchronization.
+Stores pending synchronization operations.
 
-Fields: - Id - OperationType - Data - Status - CreatedAt
+Fields
 
-------------------------------------------------------------------------
+- Id
+- OperationType
+- Payload
+- Status
+- RetryCount
+- CreatedAt
 
-# Database Rules
+---
 
--   No direct database access from client.
--   All server operations go through API.
--   Client data must support offline mode.
--   Database changes require migration.
+# Synchronization Strategy
+
+The application works completely offline.
+
+Whenever Internet becomes available:
+
+1. Upload pending operations.
+2. Download updated rules.
+3. Download notifications.
+4. Update products.
+5. Refresh packages.
+
+---
+
+# Migration Strategy
+
+Database changes are managed using
+
+Entity Framework Core Migrations.
+
+Rules
+
+- Never edit migration files manually.
+- Every schema change requires a migration.
+- Database updates are applied through EF Core.
+
+---
+
+# Data Integrity Rules
+
+- Guid IDs only
+- Foreign Keys enforced
+- Required fields validated
+- Cascade delete only when necessary
+- SHA256 verification for packages
+
+---
+
+# Security
+
+Server database is never accessed directly.
+
+Desktop applications communicate only through the Web API.
+
+JWT protects all administrator endpoints.
+
+SQLite stores only offline customer data.
+
+---
+
+# Performance
+
+Optimizations include
+
+- Indexed foreign keys
+- AsNoTracking queries
+- Pagination
+- Projection using DTOs
+- Lazy loading disabled
+- Explicit loading when required
+
+---
+
+# Future Database Extensions
+
+Future versions may include
+
+- Driver Repository
+- Cloud Synchronization
+- AI Knowledge Base
+- Remote Support History
+- Device Compatibility Database

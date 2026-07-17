@@ -1,74 +1,434 @@
 # Smart Device Manager (SDM)
 
-## System Architecture Document
+# System Architecture
 
-## Version 1.0
+**Version:** 2.0
+**Architecture Style:** Clean Architecture
+**Development Model:** Offline First
+**Framework:** .NET 9
 
-## Architecture Overview
+---
 
-The system follows a client-server architecture with Offline First
-support.
+# Architecture Overview
 
-Components: - Customer Desktop Application. - Admin Desktop
-Application. - ASP.NET Core Backend API. - SQL Server. - SQLite Local
-Storage. - SignalR Notifications.
+Smart Device Manager follows a modern layered architecture based on
+Clean Architecture principles.
 
-## Customer Application
+The architecture separates responsibilities into independent layers,
+making the system easier to maintain, test, and extend.
 
-Technology: - WPF. - WebView2. - MVVM. - SQLite.
+The project also follows the CQRS pattern to separate read operations
+from write operations.
 
-Responsibilities: - Device scanning. - Health analysis. - Offline
-diagnosis. - Software installation. - Synchronization.
+---
 
-## Backend
+# High-Level Architecture
 
-Technology: - ASP.NET Core Web API. - Clean Architecture. - Entity
-Framework Core. - SQL Server. - SignalR.
++------------------------------------------------------+
+| Customer Desktop Application (WPF + WebView2)        |
++------------------------------------------------------+
 
-Layers: - Domain. - Application. - Infrastructure. - API.
++------------------------------------------------------+
+| Admin Desktop Application (WPF + WebView2)           |
++------------------------------------------------------+
 
-## Engines
+                       │
+                       ▼
 
-### Device Scanner Engine
++------------------------------------------------------+
+| ASP.NET Core 9 Web API                               |
++------------------------------------------------------+
 
-Collects hardware and operating system information.
+                       │
 
-### Health Engine
++------------------------------------------------------+
+| Application Layer                                    |
+| CQRS + MediatR + FluentValidation                    |
++------------------------------------------------------+
 
-Analyzes device status and generates warnings.
+                       │
 
-### Diagnostic Engine
++------------------------------------------------------+
+| Domain Layer                                         |
+| Entities + Value Objects + Business Rules            |
++------------------------------------------------------+
 
-Uses offline MCQ rules and stored solutions.
+                       │
 
-### Package Manager Engine
++------------------------------------------------------+
+| Infrastructure Layer                                 |
+| EF Core + SQL Server + SQLite + JWT + SignalR        |
++------------------------------------------------------+
 
-Handles software packages, verification, and silent installation.
+                       │
 
-### Sync Engine
++------------------------------------------------------+
+| SQL Server / SQLite                                  |
++------------------------------------------------------+
 
-Handles offline queue synchronization.
+---
 
-### Notification Engine
+# Solution Structure
 
-Handles in-app and Windows notifications.
+SDM.sln
 
-## Data Storage
+- SDM.API
+- SDM.Application
+- SDM.Domain
+- SDM.Infrastructure
+- SDM.SharedKernel
+- SDM.CustomerApp
+- SDM.AdminApp
 
-Server: - SQL Server.
+---
 
-Client: - SQLite.
+# Layer Responsibilities
 
-## Security Rules
+## Presentation Layer
 
--   HTTPS communication.
--   JWT authentication.
--   Password hashing.
--   Role based authorization.
--   API is the only communication gateway.
+Responsibilities
 
-## Architecture Rules
+- User Interface
+- User Interaction
+- Navigation
+- Display Data
 
--   No business logic in UI.
--   Modules must remain independent.
--   Do not redesign architecture.
+Technology
+
+- WPF
+- WebView2
+- MVVM
+
+Rules
+
+- No Business Logic
+- No Database Access
+- No EF Core
+- No Validation Logic
+
+---
+
+## API Layer
+
+Responsibilities
+
+- REST Endpoints
+- Authentication
+- Authorization
+- Request Routing
+
+Rules
+
+- Thin Controllers
+- No Business Logic
+- Use MediatR Only
+
+---
+
+## Application Layer
+
+Responsibilities
+
+- CQRS
+- Commands
+- Queries
+- DTOs
+- Validators
+- Interfaces
+- Mapping
+- Result Pattern
+
+Technology
+
+- MediatR
+- FluentValidation
+
+Rules
+
+- No EF Core
+- No SQL Queries
+- No UI Code
+
+---
+
+## Domain Layer
+
+Responsibilities
+
+- Entities
+- Value Objects
+- Enums
+- Business Rules
+
+Rules
+
+- Pure C#
+- No Framework Dependencies
+- No EF Core
+- No ASP.NET Core
+- No MediatR
+
+---
+
+## Infrastructure Layer
+
+Responsibilities
+
+- Database
+- Repositories
+- JWT
+- SignalR
+- File Storage
+- Logging
+
+Technology
+
+- EF Core
+- SQL Server
+- SQLite
+- Serilog
+
+---
+
+# Dependency Rule
+
+Presentation
+↓
+
+API
+↓
+
+Application
+↓
+
+Domain
+
+Infrastructure depends on Application and Domain.
+
+Domain depends on nothing.
+
+---
+
+# CQRS Architecture
+
+Command
+
+↓
+
+Handler
+
+↓
+
+Repository
+
+↓
+
+Database
+
+----------------------------
+
+Query
+
+↓
+
+Handler
+
+↓
+
+Repository
+
+↓
+
+Database
+
+Commands modify data.
+
+Queries return data only.
+
+---
+
+# Repository Pattern
+
+Repositories abstract data access from the application layer.
+
+Benefits
+
+- Testability
+- Maintainability
+- Separation of Concerns
+
+---
+
+# Unit of Work
+
+Coordinates repositories.
+
+Ensures all database operations are committed together.
+
+---
+
+# Result Pattern
+
+All commands and queries return a unified Result object.
+
+Contains
+
+- Success
+- Data
+- Errors
+- Message
+
+---
+
+# Validation
+
+Input validation is implemented using FluentValidation.
+
+Benefits
+
+- Clean Controllers
+- Reusable Rules
+- Easy Testing
+
+---
+
+# Authentication
+
+Authentication uses JWT.
+
+Only administrators authenticate.
+
+Customers use the application without creating an account.
+
+---
+
+# Authorization
+
+Role-Based Authorization.
+
+Roles
+
+- Super Admin
+- Admin
+
+---
+
+# Offline First
+
+The application always works offline.
+
+SQLite stores:
+
+- Device Information
+- Local Settings
+- Cached Diagnostics
+- Pending Synchronization
+
+Synchronization occurs automatically once Internet becomes available.
+
+---
+
+# SignalR
+
+Used for
+
+- Notifications
+- Order Updates
+- System Messages
+
+---
+
+# Logging
+
+Serilog is used.
+
+Logs include
+
+- Errors
+- Warnings
+- Information
+- Performance
+
+---
+
+# Error Handling
+
+Global Exception Middleware
+
+Result Pattern
+
+Validation Errors
+
+HTTP Status Codes
+
+---
+
+# Security
+
+HTTPS
+
+JWT
+
+BCrypt
+
+Role Authorization
+
+Input Validation
+
+SHA256 Package Verification
+
+---
+
+# Architecture Rules
+
+✔ Clean Architecture
+
+✔ CQRS
+
+✔ Repository Pattern
+
+✔ Unit of Work
+
+✔ Offline First
+
+✔ Thin Controllers
+
+✔ Result Pattern
+
+✔ FluentValidation
+
+✔ SignalR
+
+✔ Dependency Injection
+
+---
+
+# Forbidden Practices
+
+❌ Business Logic inside UI
+
+❌ Business Logic inside Controllers
+
+❌ EF Core inside Domain
+
+❌ SQL inside Application
+
+❌ Static Business Classes
+
+❌ Circular Dependencies
+
+❌ Direct Database Access from Desktop Applications
+
+---
+
+# Future Architecture
+
+Future versions may include
+
+- AI Assistant
+- Driver Repository
+- Mobile Application
+- Cloud Synchronization
+- Remote Support
+
+Current architecture is designed to support these features without major redesign.
