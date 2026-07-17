@@ -2,10 +2,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SDM.API.Core;
 using SDM.Application.Common;
+using SDM.Application.SystemComponents.AttachComponentFile;
 using SDM.Application.SystemComponents.CreateSystemComponent;
 using SDM.Application.SystemComponents.DeleteSystemComponent;
+using SDM.Application.SystemComponents.GetComponentFiles;
 using SDM.Application.SystemComponents.GetSystemComponent;
 using SDM.Application.SystemComponents.GetSystemComponents;
+using SDM.Application.SystemComponents.RemoveComponentFile;
 using SDM.Application.SystemComponents.UpdateComponentStatus;
 using SDM.Application.SystemComponents.UpdateSystemComponent;
 
@@ -128,6 +131,66 @@ public sealed class SystemComponentsController : ApiControllerBase
     public async Task<ActionResult> DeleteSystemComponent([FromRoute] Guid id)
     {
         var result = await Mediator.Send(new DeleteSystemComponentCommand { Id = id });
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Retrieves the file metadata records attached to a system component.
+    /// Returns safe metadata only — no physical paths are exposed.
+    /// Accessible anonymously.
+    /// </summary>
+    [HttpGet("{id:guid}/files")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<List<ComponentFileRecord>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> GetComponentFiles([FromRoute] Guid id)
+    {
+        var result = await Mediator.Send(new GetComponentFilesQuery { ComponentId = id });
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Attaches a new file metadata record to a system component.
+    /// Restricted to SuperAdmins and Admins.
+    /// </summary>
+    [HttpPost("{id:guid}/files")]
+    [Authorize(Policy = Policies.RequireAdmin)]
+    [ProducesResponseType(typeof(ApiResponse<AttachComponentFileResponse>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status422UnprocessableEntity)]
+    public async Task<ActionResult> AttachComponentFile([FromRoute] Guid id, [FromBody] AttachComponentFileCommand command)
+    {
+        if (id != command.ComponentId)
+        {
+            return BadRequest(new ApiResponse<object>(
+                false,
+                "The component ID in the URL does not match the ID in the request body.",
+                null,
+                [new ApiError("ComponentFile.IdMismatch", "URL component ID and body component ID must match.")]));
+        }
+
+        var result = await Mediator.Send(command);
+        if (result.IsSuccess)
+        {
+            return Created(
+                uri: string.Empty,
+                value: new ApiResponse<AttachComponentFileResponse>(true, result.Message, result.Data, []));
+        }
+
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Removes a file metadata record from a system component.
+    /// Restricted to SuperAdmins and Admins.
+    /// </summary>
+    [HttpDelete("files/{fileId:guid}")]
+    [Authorize(Policy = Policies.RequireAdmin)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> RemoveComponentFile([FromRoute] Guid fileId)
+    {
+        var result = await Mediator.Send(new RemoveComponentFileCommand { Id = fileId });
         return HandleResult(result);
     }
 }

@@ -29,6 +29,9 @@ internal sealed class DiagnosticRuleConfiguration : IEntityTypeConfiguration<Dia
 
         builder.Property(x => x.CreatedAt).IsRequired();
 
+        // Optimistic concurrency token — managed by SQL Server
+        builder.Property(x => x.RowVersion).IsRowVersion();
+
         // Relationship configured in DiagnosticCategoryConfiguration
         builder.HasOne(r => r.Category)
             .WithMany(c => c.Rules)

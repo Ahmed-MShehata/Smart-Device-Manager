@@ -53,6 +53,12 @@ public interface IReadDbContext
     /// <summary>Queryable set of required Windows system components.</summary>
     IQueryable<SystemComponent> SystemComponents { get; }
 
+    /// <summary>Queryable set of file records attached to software packages.</summary>
+    IQueryable<PackageFile> PackageFiles { get; }
+
+    /// <summary>Queryable set of file records attached to system components.</summary>
+    IQueryable<ComponentFile> ComponentFiles { get; }
+
     /// <summary>Queryable set of diagnostic problem categories.</summary>
     IQueryable<DiagnosticCategory> DiagnosticCategories { get; }
 

@@ -34,6 +34,9 @@ internal sealed class SettingConfiguration : IEntityTypeConfiguration<Setting>
         // Unique constraint on Key
         builder.HasIndex(x => x.Key).IsUnique();
 
+        // Optimistic concurrency token — managed by SQL Server
+        builder.Property(x => x.RowVersion).IsRowVersion();
+
         // ─── Seed Data ─────────────────────────────────────────────────────
         builder.HasData(
             new

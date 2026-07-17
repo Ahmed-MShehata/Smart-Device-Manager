@@ -29,6 +29,9 @@ internal sealed class OrderItemConfiguration : IEntityTypeConfiguration<OrderIte
         // LineTotal is a computed domain property — never stored
         builder.Ignore(x => x.LineTotal);
 
+        // Optimistic concurrency token — managed by SQL Server
+        builder.Property(x => x.RowVersion).IsRowVersion();
+
         // ─── Relationships ─────────────────────────────────────────────────
         // Order → OrderItems (configured in OrderConfiguration, repeated here for clarity)
         builder.HasOne(i => i.Order)

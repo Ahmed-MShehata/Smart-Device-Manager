@@ -39,5 +39,8 @@ internal sealed class NotificationConfiguration : IEntityTypeConfiguration<Notif
             .HasMaxLength(100);
 
         builder.Property(x => x.CreatedAt).IsRequired();
+
+        // Optimistic concurrency token — managed by SQL Server
+        builder.Property(x => x.RowVersion).IsRowVersion();
     }
 }

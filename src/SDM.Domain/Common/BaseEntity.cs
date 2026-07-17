@@ -12,6 +12,13 @@ public abstract class BaseEntity
     /// <summary>Gets the UTC date and time when this entity was created.</summary>
     public DateTime CreatedAt { get; protected set; }
 
+    /// <summary>
+    /// Gets the opaque row version token issued by SQL Server.
+    /// EF Core uses this to implement optimistic concurrency control.
+    /// The value is automatically managed by the database — never set it manually.
+    /// </summary>
+    public byte[]? RowVersion { get; protected set; }
+
     /// <summary>Initializes a new instance of <see cref="BaseEntity"/> with a new Guid and the current UTC time.</summary>
     protected BaseEntity()
     {

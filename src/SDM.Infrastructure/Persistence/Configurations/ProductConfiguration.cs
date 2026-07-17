@@ -63,5 +63,8 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
 
         // FinalPrice is a computed domain property — never stored
         builder.Ignore(x => x.FinalPrice);
+
+        // Optimistic concurrency token — managed by SQL Server
+        builder.Property(x => x.RowVersion).IsRowVersion();
     }
 }

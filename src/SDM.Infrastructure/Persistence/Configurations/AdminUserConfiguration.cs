@@ -40,6 +40,9 @@ internal sealed class AdminUserConfiguration : IEntityTypeConfiguration<AdminUse
         // Unique constraint on Username
         builder.HasIndex(x => x.Username).IsUnique();
 
+        // Optimistic concurrency token — managed by SQL Server
+        builder.Property(x => x.RowVersion).IsRowVersion();
+
         // ─── Seed Data ─────────────────────────────────────────────────────
         // Default SuperAdmin account. Password: Admin@123! (BCrypt placeholder — change before production)
         builder.HasData(new

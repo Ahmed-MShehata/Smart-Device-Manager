@@ -51,5 +51,8 @@ internal sealed class SystemComponentConfiguration : IEntityTypeConfiguration<Sy
         builder.Property(x => x.CreatedBy).IsRequired().HasMaxLength(100);
         builder.Property(x => x.UpdatedAt);
         builder.Property(x => x.UpdatedBy).HasMaxLength(100);
+
+        // Optimistic concurrency token — managed by SQL Server
+        builder.Property(x => x.RowVersion).IsRowVersion();
     }
 }

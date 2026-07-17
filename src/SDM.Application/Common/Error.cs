@@ -36,6 +36,10 @@ public sealed record Error
     public static Error Conflict(string resource) =>
         new($"{resource}.Conflict", $"{resource} already exists.");
 
+    /// <summary>Returns a "conflict" error with a custom message.</summary>
+    public static Error Conflict(string resource, string message) =>
+        new($"{resource}.Conflict", message);
+
     /// <summary>Returns a "validation" error for invalid input.</summary>
     public static Error Validation(string field, string message) =>
         new($"Validation.{field}", message);
@@ -43,6 +47,10 @@ public sealed record Error
     /// <summary>Returns a generic "unauthorized" error.</summary>
     public static Error Unauthorized() =>
         new("Auth.Unauthorized", "You are not authorized to perform this action.");
+
+    /// <summary>Returns an "unauthorized" error with a custom message.</summary>
+    public static Error Unauthorized(string message) =>
+        new("Auth.Unauthorized", message);
 
     /// <summary>Returns a generic "forbidden" error.</summary>
     public static Error Forbidden() =>

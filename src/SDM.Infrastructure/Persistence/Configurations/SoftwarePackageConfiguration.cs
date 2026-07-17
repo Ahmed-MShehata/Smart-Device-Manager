@@ -70,5 +70,8 @@ internal sealed class SoftwarePackageConfiguration : IEntityTypeConfiguration<So
 
         // Unique constraint: Name + Version combination
         builder.HasIndex(x => new { x.Name, x.Version }).IsUnique();
+
+        // Optimistic concurrency token — managed by SQL Server
+        builder.Property(x => x.RowVersion).IsRowVersion();
     }
 }

@@ -18,7 +18,12 @@ internal sealed class UnitOfWork : IUnitOfWork
     private IRepository<OrderItem>? _orderItems;
     private IRepository<SoftwarePackage>? _softwarePackages;
     private IRepository<SystemComponent>? _systemComponents;
+    private IRepository<PackageFile>? _packageFiles;
+    private IRepository<ComponentFile>? _componentFiles;
     private IRepository<DiagnosticCategory>? _diagnosticCategories;
+    private IRepository<DiagnosticQuestion>? _diagnosticQuestions;
+    private IRepository<DiagnosticChoice>? _diagnosticChoices;
+    private IRepository<DiagnosticRule>? _diagnosticRules;
     private IRepository<Notification>? _notifications;
     private IRepository<Setting>? _settings;
 
@@ -53,8 +58,28 @@ internal sealed class UnitOfWork : IUnitOfWork
         => _systemComponents ??= new Repository<SystemComponent>(_context);
 
     /// <inheritdoc/>
+    public IRepository<PackageFile> PackageFiles
+        => _packageFiles ??= new Repository<PackageFile>(_context);
+
+    /// <inheritdoc/>
+    public IRepository<ComponentFile> ComponentFiles
+        => _componentFiles ??= new Repository<ComponentFile>(_context);
+
+    /// <inheritdoc/>
     public IRepository<DiagnosticCategory> DiagnosticCategories
         => _diagnosticCategories ??= new Repository<DiagnosticCategory>(_context);
+
+    /// <inheritdoc/>
+    public IRepository<DiagnosticQuestion> DiagnosticQuestions
+        => _diagnosticQuestions ??= new Repository<DiagnosticQuestion>(_context);
+
+    /// <inheritdoc/>
+    public IRepository<DiagnosticChoice> DiagnosticChoices
+        => _diagnosticChoices ??= new Repository<DiagnosticChoice>(_context);
+
+    /// <inheritdoc/>
+    public IRepository<DiagnosticRule> DiagnosticRules
+        => _diagnosticRules ??= new Repository<DiagnosticRule>(_context);
 
     /// <inheritdoc/>
     public IRepository<Notification> Notifications

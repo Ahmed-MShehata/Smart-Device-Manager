@@ -26,8 +26,23 @@ public interface IUnitOfWork : IDisposable
     /// <summary>Repository for <see cref="SystemComponent"/> entities.</summary>
     IRepository<SystemComponent> SystemComponents { get; }
 
+    /// <summary>Repository for <see cref="PackageFile"/> entities.</summary>
+    IRepository<PackageFile> PackageFiles { get; }
+
+    /// <summary>Repository for <see cref="ComponentFile"/> entities.</summary>
+    IRepository<ComponentFile> ComponentFiles { get; }
+
     /// <summary>Repository for <see cref="DiagnosticCategory"/> entities.</summary>
     IRepository<DiagnosticCategory> DiagnosticCategories { get; }
+
+    /// <summary>Repository for <see cref="DiagnosticQuestion"/> entities.</summary>
+    IRepository<DiagnosticQuestion> DiagnosticQuestions { get; }
+
+    /// <summary>Repository for <see cref="DiagnosticChoice"/> entities.</summary>
+    IRepository<DiagnosticChoice> DiagnosticChoices { get; }
+
+    /// <summary>Repository for <see cref="DiagnosticRule"/> entities.</summary>
+    IRepository<DiagnosticRule> DiagnosticRules { get; }
 
     /// <summary>Repository for <see cref="Notification"/> entities.</summary>
     IRepository<Notification> Notifications { get; }

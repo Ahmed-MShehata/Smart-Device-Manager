@@ -43,6 +43,9 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         // TotalPrice is a computed domain property — never stored
         builder.Ignore(x => x.TotalPrice);
 
+        // Optimistic concurrency token — managed by SQL Server
+        builder.Property(x => x.RowVersion).IsRowVersion();
+
         // ─── DeviceReference Owned Type ────────────────────────────────────
         // Maps the DeviceReference value object as an owned entity.
         // DeviceId is stored as a column on the Orders table (not a separate table).

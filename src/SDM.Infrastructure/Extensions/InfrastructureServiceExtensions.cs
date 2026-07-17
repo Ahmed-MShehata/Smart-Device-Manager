@@ -89,6 +89,12 @@ public static class InfrastructureServiceExtensions
         // Local disk image storage — stores files under wwwroot/images/products/
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
+        // Password hashing backed by ASP.NET Core Identity PasswordHasher<T>
+        services.AddScoped<IPasswordHasher, PasswordHasherService>();
+
+        // JWT token generation
+        services.AddScoped<IJwtProvider, JwtProvider>();
+
         return services;
     }
 }

@@ -61,6 +61,12 @@ public class ApplicationDbContext : DbContext, IReadDbContext
     /// <summary>Required Windows runtime components.</summary>
     public DbSet<SystemComponent> SystemComponents => Set<SystemComponent>();
 
+    /// <summary>File metadata records attached to software packages.</summary>
+    public DbSet<PackageFile> PackageFiles => Set<PackageFile>();
+
+    /// <summary>File metadata records attached to system components.</summary>
+    public DbSet<ComponentFile> ComponentFiles => Set<ComponentFile>();
+
     /// <summary>Top-level diagnostic problem categories.</summary>
     public DbSet<DiagnosticCategory> DiagnosticCategories => Set<DiagnosticCategory>();
 
@@ -87,6 +93,8 @@ public class ApplicationDbContext : DbContext, IReadDbContext
     IQueryable<OrderItem>         IReadDbContext.OrderItems          => OrderItems.AsNoTracking();
     IQueryable<SoftwarePackage>   IReadDbContext.SoftwarePackages    => SoftwarePackages.AsNoTracking();
     IQueryable<SystemComponent>   IReadDbContext.SystemComponents    => SystemComponents.AsNoTracking();
+    IQueryable<PackageFile>        IReadDbContext.PackageFiles         => PackageFiles.AsNoTracking();
+    IQueryable<ComponentFile>      IReadDbContext.ComponentFiles       => ComponentFiles.AsNoTracking();
     IQueryable<DiagnosticCategory> IReadDbContext.DiagnosticCategories => DiagnosticCategories.AsNoTracking();
     IQueryable<DiagnosticQuestion> IReadDbContext.DiagnosticQuestions  => DiagnosticQuestions.AsNoTracking();
     IQueryable<DiagnosticChoice>  IReadDbContext.DiagnosticChoices   => DiagnosticChoices.AsNoTracking();

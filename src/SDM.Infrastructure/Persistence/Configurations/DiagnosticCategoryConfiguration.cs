@@ -33,6 +33,9 @@ internal sealed class DiagnosticCategoryConfiguration : IEntityTypeConfiguration
         // Unique constraint on Name
         builder.HasIndex(x => x.Name).IsUnique();
 
+        // Optimistic concurrency token — managed by SQL Server
+        builder.Property(x => x.RowVersion).IsRowVersion();
+
         // ─── Questions collection (backing field) ──────────────────────────
         builder.HasMany(c => c.Questions)
             .WithOne(q => q.Category)

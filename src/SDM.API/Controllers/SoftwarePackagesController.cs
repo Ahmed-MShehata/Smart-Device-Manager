@@ -2,10 +2,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SDM.API.Core;
 using SDM.Application.Common;
+using SDM.Application.SoftwarePackages.AttachPackageFile;
 using SDM.Application.SoftwarePackages.CreateSoftwarePackage;
 using SDM.Application.SoftwarePackages.DeleteSoftwarePackage;
+using SDM.Application.SoftwarePackages.GetPackageFiles;
 using SDM.Application.SoftwarePackages.GetSoftwarePackage;
 using SDM.Application.SoftwarePackages.GetSoftwarePackages;
+using SDM.Application.SoftwarePackages.RemovePackageFile;
 using SDM.Application.SoftwarePackages.UpdatePackageStatus;
 using SDM.Application.SoftwarePackages.UpdateSoftwarePackage;
 
@@ -128,6 +131,66 @@ public sealed class SoftwarePackagesController : ApiControllerBase
     public async Task<ActionResult> DeleteSoftwarePackage([FromRoute] Guid id)
     {
         var result = await Mediator.Send(new DeleteSoftwarePackageCommand { Id = id });
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Retrieves the file metadata records attached to a software package.
+    /// Returns safe metadata only — no physical paths are exposed.
+    /// Accessible anonymously.
+    /// </summary>
+    [HttpGet("{id:guid}/files")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<List<PackageFileRecord>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> GetPackageFiles([FromRoute] Guid id)
+    {
+        var result = await Mediator.Send(new GetPackageFilesQuery { PackageId = id });
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Attaches a new file metadata record to a software package.
+    /// Restricted to SuperAdmins and Admins.
+    /// </summary>
+    [HttpPost("{id:guid}/files")]
+    [Authorize(Policy = Policies.RequireAdmin)]
+    [ProducesResponseType(typeof(ApiResponse<AttachPackageFileResponse>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status422UnprocessableEntity)]
+    public async Task<ActionResult> AttachPackageFile([FromRoute] Guid id, [FromBody] AttachPackageFileCommand command)
+    {
+        if (id != command.PackageId)
+        {
+            return BadRequest(new ApiResponse<object>(
+                false,
+                "The package ID in the URL does not match the ID in the request body.",
+                null,
+                [new ApiError("PackageFile.IdMismatch", "URL package ID and body package ID must match.")]));
+        }
+
+        var result = await Mediator.Send(command);
+        if (result.IsSuccess)
+        {
+            return Created(
+                uri: string.Empty,
+                value: new ApiResponse<AttachPackageFileResponse>(true, result.Message, result.Data, []));
+        }
+
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Removes a file metadata record from a software package.
+    /// Restricted to SuperAdmins and Admins.
+    /// </summary>
+    [HttpDelete("files/{fileId:guid}")]
+    [Authorize(Policy = Policies.RequireAdmin)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> RemovePackageFile([FromRoute] Guid fileId)
+    {
+        var result = await Mediator.Send(new RemovePackageFileCommand { Id = fileId });
         return HandleResult(result);
     }
 }

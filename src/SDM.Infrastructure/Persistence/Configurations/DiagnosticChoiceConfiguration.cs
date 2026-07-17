@@ -26,6 +26,9 @@ internal sealed class DiagnosticChoiceConfiguration : IEntityTypeConfiguration<D
 
         builder.Property(x => x.CreatedAt).IsRequired();
 
+        // Optimistic concurrency token — managed by SQL Server
+        builder.Property(x => x.RowVersion).IsRowVersion();
+
         // Relationship configured in DiagnosticQuestionConfiguration
         builder.HasOne(c => c.Question)
             .WithMany(q => q.Choices)
