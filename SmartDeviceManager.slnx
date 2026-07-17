@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SDM.AdminApp/SDM.AdminApp.csproj" />
+    <Project Path="src/SDM.API/SDM.API.csproj" />
+    <Project Path="src/SDM.Application/SDM.Application.csproj" />
+    <Project Path="src/SDM.CustomerApp/SDM.CustomerApp.csproj" />
+    <Project Path="src/SDM.Domain/SDM.Domain.csproj" />
+    <Project Path="src/SDM.Infrastructure/SDM.Infrastructure.csproj" />
+  </Folder>
+</Solution>

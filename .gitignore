@@ -1,0 +1,24 @@
+# Build folders
+**/bin/
+**/obj/
+
+# Visual Studio
+.vs/
+
+# Rider
+.idea/
+
+# User files
+*.user
+*.suo
+
+# Logs
+*.log
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# Publish
+publish/
