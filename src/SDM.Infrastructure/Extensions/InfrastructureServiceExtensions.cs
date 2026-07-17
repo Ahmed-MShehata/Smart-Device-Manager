@@ -67,6 +67,11 @@ public static class InfrastructureServiceExtensions
         // Unit of Work — scoped per HTTP request
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+        // Read-only query context — resolves from the same scoped ApplicationDbContext
+        // instance so both read and write paths share a single EF Core context per request.
+        services.AddScoped<IReadDbContext>(
+            sp => sp.GetRequiredService<ApplicationDbContext>());
+
         return services;
     }
 
@@ -80,6 +85,9 @@ public static class InfrastructureServiceExtensions
 
         // Provides authenticated admin identity to Application layer handlers
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+        // Local disk image storage — stores files under wwwroot/images/products/
+        services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
         return services;
     }

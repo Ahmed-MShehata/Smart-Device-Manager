@@ -5,7 +5,8 @@ namespace SDM.Domain.Entities;
 
 /// <summary>
 /// Represents an administrator account used to access the Admin Desktop Application and Backend API.
-/// Inherits audit fields from <see cref="AuditableEntity"/>.
+/// Audit fields (<c>CreatedBy</c>, <c>UpdatedBy</c>, <c>UpdatedAt</c>) are stamped
+/// automatically by Infrastructure — never by this entity.
 /// </summary>
 public class AdminUser : AuditableEntity
 {
@@ -26,51 +27,42 @@ public class AdminUser : AuditableEntity
 
     /// <summary>
     /// Creates a new <see cref="AdminUser"/>.
+    /// Audit fields are stamped by Infrastructure on save.
     /// </summary>
     /// <param name="username">Unique login identifier. MinLength: 3, MaxLength: 50.</param>
     /// <param name="passwordHash">Pre-hashed password string. Never pass plain text.</param>
-    /// <param name="createdBy">Username of the admin who created this account.</param>
     /// <param name="role">Access level role. Defaults to <see cref="AdminRole.Admin"/>.</param>
-    public AdminUser(string username, string passwordHash, string createdBy, AdminRole role = AdminRole.Admin)
+    public AdminUser(string username, string passwordHash, AdminRole role = AdminRole.Admin)
     {
         Username = username;
         PasswordHash = passwordHash;
         Role = role;
         IsActive = true;
-        CreatedBy = createdBy;
     }
 
     /// <summary>Deactivates this account, preventing authentication.</summary>
-    /// <param name="updatedBy">Username of the admin performing the action.</param>
-    public void Deactivate(string updatedBy)
+    public void Deactivate()
     {
         IsActive = false;
-        RecordUpdate(updatedBy);
     }
 
     /// <summary>Reactivates this account, allowing authentication.</summary>
-    /// <param name="updatedBy">Username of the admin performing the action.</param>
-    public void Activate(string updatedBy)
+    public void Activate()
     {
         IsActive = true;
-        RecordUpdate(updatedBy);
     }
 
     /// <summary>Replaces the stored password hash.</summary>
     /// <param name="newPasswordHash">The new hashed password. Never pass plain text.</param>
-    /// <param name="updatedBy">Username of the admin performing the action.</param>
-    public void UpdatePassword(string newPasswordHash, string updatedBy)
+    public void UpdatePassword(string newPasswordHash)
     {
         PasswordHash = newPasswordHash;
-        RecordUpdate(updatedBy);
     }
 
     /// <summary>Changes the role of this administrator.</summary>
     /// <param name="newRole">The new <see cref="AdminRole"/> to assign.</param>
-    /// <param name="updatedBy">Username of the admin performing the action.</param>
-    public void UpdateRole(AdminRole newRole, string updatedBy)
+    public void UpdateRole(AdminRole newRole)
     {
         Role = newRole;
-        RecordUpdate(updatedBy);
     }
 }

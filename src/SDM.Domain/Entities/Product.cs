@@ -5,7 +5,8 @@ namespace SDM.Domain.Entities;
 
 /// <summary>
 /// Represents a hardware product available for customers to browse and order.
-/// Inherits audit fields from <see cref="AuditableEntity"/>.
+/// Audit fields (<c>CreatedBy</c>, <c>UpdatedBy</c>, <c>UpdatedAt</c>) are stamped
+/// automatically by Infrastructure — never by the handler or by this entity.
 /// </summary>
 public class Product : AuditableEntity
 {
@@ -50,6 +51,8 @@ public class Product : AuditableEntity
 
     /// <summary>
     /// Creates a new <see cref="Product"/>.
+    /// Status defaults to <see cref="ProductStatus.Active"/>.
+    /// Audit fields are stamped by Infrastructure on save.
     /// </summary>
     /// <param name="name">Display name. Required.</param>
     /// <param name="category">Hardware category.</param>
@@ -59,7 +62,6 @@ public class Product : AuditableEntity
     /// <param name="discount">Discount percentage. Range: 0–100.</param>
     /// <param name="quantity">Stock count. Must be zero or greater.</param>
     /// <param name="warrantyMonths">Warranty duration in months. Zero means no warranty.</param>
-    /// <param name="createdBy">Username of the admin who created this record.</param>
     /// <param name="imagePath">Optional path or URL to the product image.</param>
     public Product(
         string name,
@@ -70,7 +72,6 @@ public class Product : AuditableEntity
         decimal discount,
         int quantity,
         int warrantyMonths,
-        string createdBy,
         string? imagePath = null)
     {
         Name = name;
@@ -83,11 +84,9 @@ public class Product : AuditableEntity
         WarrantyMonths = warrantyMonths;
         ImagePath = imagePath;
         Status = ProductStatus.Active;
-        CreatedBy = createdBy;
     }
 
     /// <summary>Updates all editable properties of this product.</summary>
-    /// <param name="updatedBy">Username of the admin performing the update.</param>
     public void Update(
         string name,
         ProductCategory category,
@@ -97,8 +96,7 @@ public class Product : AuditableEntity
         decimal discount,
         int quantity,
         int warrantyMonths,
-        string? imagePath,
-        string updatedBy)
+        string? imagePath)
     {
         Name = name;
         Category = category;
@@ -109,35 +107,40 @@ public class Product : AuditableEntity
         Quantity = quantity;
         WarrantyMonths = warrantyMonths;
         ImagePath = imagePath;
-        RecordUpdate(updatedBy);
     }
 
     /// <summary>Sets the availability status of this product.</summary>
     /// <param name="status">The new <see cref="ProductStatus"/>.</param>
-    /// <param name="updatedBy">Username of the admin performing the action.</param>
-    public void SetStatus(ProductStatus status, string updatedBy)
+    public void SetStatus(ProductStatus status)
     {
         Status = status;
-        RecordUpdate(updatedBy);
     }
 
     /// <summary>
-    /// Reduces stock by the given quantity. Automatically sets status to
+    /// Sets or replaces the product image path.
+    /// Pass <see langword="null"/> to clear the image.
+    /// </summary>
+    /// <param name="imagePath">Relative path to the image file, or null to remove the image.</param>
+    public void SetImagePath(string? imagePath)
+    {
+        ImagePath = imagePath;
+    }
+
+    /// <summary>
+    /// Reduces stock by the given amount. Sets status to
     /// <see cref="ProductStatus.OutOfStock"/> when quantity reaches zero.
     /// </summary>
     /// <param name="amount">Number of units to reduce.</param>
-    /// <param name="updatedBy">Username performing the action.</param>
     /// <exception cref="InvalidOperationException">Thrown when stock would go below zero.</exception>
-    public void ReduceStock(int amount, string updatedBy)
+    public void ReduceStock(int amount)
     {
         if (Quantity - amount < 0)
-            throw new InvalidOperationException($"Insufficient stock. Available: {Quantity}, Requested: {amount}.");
+            throw new InvalidOperationException(
+                $"Insufficient stock. Available: {Quantity}, Requested: {amount}.");
 
         Quantity -= amount;
 
         if (Quantity == 0 && Status == ProductStatus.Active)
             Status = ProductStatus.OutOfStock;
-
-        RecordUpdate(updatedBy);
     }
 }

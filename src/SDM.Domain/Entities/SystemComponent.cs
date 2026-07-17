@@ -6,7 +6,8 @@ namespace SDM.Domain.Entities;
 /// <summary>
 /// Represents a required Windows runtime component (e.g., .NET Runtime, Visual C++, DirectX)
 /// that must be installed as a prerequisite before software packages can run.
-/// Inherits audit fields from <see cref="AuditableEntity"/>.
+/// Audit fields (<c>CreatedBy</c>, <c>UpdatedBy</c>, <c>UpdatedAt</c>) are stamped
+/// automatically by Infrastructure — never by this entity.
 /// </summary>
 public class SystemComponent : AuditableEntity
 {
@@ -39,6 +40,8 @@ public class SystemComponent : AuditableEntity
 
     /// <summary>
     /// Creates a new <see cref="SystemComponent"/>.
+    /// Status defaults to <see cref="ComponentStatus.Active"/>.
+    /// Audit fields are stamped by Infrastructure on save.
     /// </summary>
     /// <param name="name">Display name. Required.</param>
     /// <param name="version">Version string. Required.</param>
@@ -46,7 +49,6 @@ public class SystemComponent : AuditableEntity
     /// <param name="silentInstallCommand">Silent install command. Required and non-empty.</param>
     /// <param name="sha256">64-character lowercase hex SHA-256 hash. Required.</param>
     /// <param name="size">File size in bytes. Must be greater than zero.</param>
-    /// <param name="createdBy">Username of the admin who created this record.</param>
     /// <param name="requiresRestart">Whether a restart is required after installation.</param>
     public SystemComponent(
         string name,
@@ -55,7 +57,6 @@ public class SystemComponent : AuditableEntity
         string silentInstallCommand,
         string sha256,
         long size,
-        string createdBy,
         bool requiresRestart = false)
     {
         Name = name;
@@ -66,20 +67,16 @@ public class SystemComponent : AuditableEntity
         Size = size;
         RequiresRestart = requiresRestart;
         Status = ComponentStatus.Active;
-        CreatedBy = createdBy;
     }
 
     /// <summary>Sets the availability status of this component.</summary>
     /// <param name="status">The new <see cref="ComponentStatus"/>.</param>
-    /// <param name="updatedBy">Username of the admin performing the action.</param>
-    public void SetStatus(ComponentStatus status, string updatedBy)
+    public void SetStatus(ComponentStatus status)
     {
         Status = status;
-        RecordUpdate(updatedBy);
     }
 
     /// <summary>Updates the editable metadata of this component.</summary>
-    /// <param name="updatedBy">Username of the admin performing the update.</param>
     public void Update(
         string name,
         string version,
@@ -87,8 +84,7 @@ public class SystemComponent : AuditableEntity
         string silentInstallCommand,
         string sha256,
         long size,
-        bool requiresRestart,
-        string updatedBy)
+        bool requiresRestart)
     {
         Name = name;
         Version = version;
@@ -97,6 +93,5 @@ public class SystemComponent : AuditableEntity
         SHA256 = sha256;
         Size = size;
         RequiresRestart = requiresRestart;
-        RecordUpdate(updatedBy);
     }
 }

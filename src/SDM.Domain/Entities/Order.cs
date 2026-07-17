@@ -7,7 +7,8 @@ namespace SDM.Domain.Entities;
 /// <summary>
 /// Represents a customer hardware purchase transaction.
 /// Contains customer contact details, a device reference, and one or more order items.
-/// Inherits audit fields from <see cref="AuditableEntity"/>.
+/// Audit fields (<c>CreatedBy</c>, <c>UpdatedBy</c>, <c>UpdatedAt</c>) are stamped
+/// automatically by Infrastructure — never by this entity.
 /// </summary>
 public class Order : AuditableEntity
 {
@@ -48,25 +49,24 @@ public class Order : AuditableEntity
 
     /// <summary>
     /// Creates a new <see cref="Order"/>.
+    /// Status defaults to <see cref="OrderStatus.Pending"/>.
+    /// Audit fields are stamped by Infrastructure on save.
     /// </summary>
     /// <param name="customerName">Full name of the customer. Required.</param>
     /// <param name="phoneNumber">Customer phone number. Required.</param>
     /// <param name="address">Delivery address. Required.</param>
     /// <param name="device">Reference to the customer's device. Required.</param>
-    /// <param name="createdBy">Username of the admin or system creating this order.</param>
     public Order(
         string customerName,
         string phoneNumber,
         string address,
-        DeviceReference device,
-        string createdBy)
+        DeviceReference device)
     {
         CustomerName = customerName;
         PhoneNumber = phoneNumber;
         Address = address;
         Device = device;
         Status = OrderStatus.Pending;
-        CreatedBy = createdBy;
     }
 
     /// <summary>
@@ -85,24 +85,20 @@ public class Order : AuditableEntity
     /// Terminal statuses (Delivered, Cancelled) cannot be changed.
     /// </summary>
     /// <param name="newStatus">The target <see cref="OrderStatus"/>.</param>
-    /// <param name="updatedBy">Username of the admin performing the action.</param>
     /// <exception cref="InvalidOperationException">Thrown when the order is in a terminal state.</exception>
-    public void UpdateStatus(OrderStatus newStatus, string updatedBy)
+    public void UpdateStatus(OrderStatus newStatus)
     {
         if (Status == OrderStatus.Delivered || Status == OrderStatus.Cancelled)
             throw new InvalidOperationException(
                 $"Cannot change status of an order that is already {Status}.");
 
         Status = newStatus;
-        RecordUpdate(updatedBy);
     }
 
     /// <summary>Sets or updates the admin notes on this order.</summary>
     /// <param name="notes">The note text. Null clears the notes.</param>
-    /// <param name="updatedBy">Username of the admin performing the action.</param>
-    public void SetNotes(string? notes, string updatedBy)
+    public void SetNotes(string? notes)
     {
         Notes = notes;
-        RecordUpdate(updatedBy);
     }
 }

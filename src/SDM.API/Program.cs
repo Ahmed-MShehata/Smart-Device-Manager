@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using SDM.API.Core;
 using SDM.Application;
 using SDM.Infrastructure.Extensions;
 using SDM.Infrastructure.Hubs;
@@ -70,6 +71,7 @@ try
     app.UseSerilogRequestLogging();
     app.UseHttpsRedirection();
     app.UseCors("AllowAll");
+    app.UseStaticFiles();
 
     app.UseAuthentication();
     app.UseAuthorization();
@@ -140,7 +142,12 @@ static class JwtExtensions
             };
         });
 
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy(Policies.RequireSuperAdmin, policy => policy.RequireRole(Roles.SuperAdmin));
+            options.AddPolicy(Policies.RequireAdmin, policy => policy.RequireRole(Roles.SuperAdmin, Roles.Admin));
+            options.AddPolicy(Policies.RequireAnyAdmin, policy => policy.RequireRole(Roles.SuperAdmin, Roles.Admin, Roles.Support));
+        });
         return services;
     }
 }

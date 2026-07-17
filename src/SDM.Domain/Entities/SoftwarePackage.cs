@@ -5,7 +5,8 @@ namespace SDM.Domain.Entities;
 
 /// <summary>
 /// Represents a software package that the admin uploads and customers can silently install.
-/// Inherits audit fields from <see cref="AuditableEntity"/>.
+/// Audit fields (<c>CreatedBy</c>, <c>UpdatedBy</c>, <c>UpdatedAt</c>) are stamped
+/// automatically by Infrastructure — never by this entity.
 /// </summary>
 public class SoftwarePackage : AuditableEntity
 {
@@ -50,6 +51,8 @@ public class SoftwarePackage : AuditableEntity
 
     /// <summary>
     /// Creates a new <see cref="SoftwarePackage"/>.
+    /// Status defaults to <see cref="PackageStatus.Active"/>.
+    /// Audit fields are stamped by Infrastructure on save.
     /// </summary>
     /// <param name="name">Display name. Required.</param>
     /// <param name="version">Version string. Required.</param>
@@ -61,7 +64,6 @@ public class SoftwarePackage : AuditableEntity
     /// <param name="sha256">64-character lowercase hex SHA-256 hash. Required.</param>
     /// <param name="size">File size in bytes. Must be greater than zero.</param>
     /// <param name="installerType">Installer format (EXE, MSI, ZIP).</param>
-    /// <param name="createdBy">Username of the admin who uploaded this package.</param>
     /// <param name="requiresRestart">Whether a restart is required after installation.</param>
     public SoftwarePackage(
         string name,
@@ -74,7 +76,6 @@ public class SoftwarePackage : AuditableEntity
         string sha256,
         long size,
         InstallerType installerType,
-        string createdBy,
         bool requiresRestart = false)
     {
         Name = name;
@@ -89,20 +90,16 @@ public class SoftwarePackage : AuditableEntity
         InstallerType = installerType;
         RequiresRestart = requiresRestart;
         Status = PackageStatus.Active;
-        CreatedBy = createdBy;
     }
 
     /// <summary>Sets the availability status of this package.</summary>
     /// <param name="status">The new <see cref="PackageStatus"/>.</param>
-    /// <param name="updatedBy">Username of the admin performing the action.</param>
-    public void SetStatus(PackageStatus status, string updatedBy)
+    public void SetStatus(PackageStatus status)
     {
         Status = status;
-        RecordUpdate(updatedBy);
     }
 
     /// <summary>Updates the editable metadata of this package.</summary>
-    /// <param name="updatedBy">Username of the admin performing the update.</param>
     public void Update(
         string name,
         string version,
@@ -114,8 +111,7 @@ public class SoftwarePackage : AuditableEntity
         string sha256,
         long size,
         InstallerType installerType,
-        bool requiresRestart,
-        string updatedBy)
+        bool requiresRestart)
     {
         Name = name;
         Version = version;
@@ -128,6 +124,5 @@ public class SoftwarePackage : AuditableEntity
         Size = size;
         InstallerType = installerType;
         RequiresRestart = requiresRestart;
-        RecordUpdate(updatedBy);
     }
 }

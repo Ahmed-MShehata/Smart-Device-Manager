@@ -2,7 +2,9 @@ namespace SDM.Domain.Common;
 
 /// <summary>
 /// Extends <see cref="BaseEntity"/> with audit trail fields.
-/// Used by entities that are actively managed via CRUD operations.
+/// Audit values (<see cref="CreatedBy"/>, <see cref="UpdatedBy"/>, <see cref="UpdatedAt"/>)
+/// are automatically stamped by the Infrastructure layer during <c>SaveChangesAsync</c>.
+/// Domain entities do not set these fields directly.
 /// </summary>
 public abstract class AuditableEntity : BaseEntity
 {
@@ -14,14 +16,4 @@ public abstract class AuditableEntity : BaseEntity
 
     /// <summary>Gets the username of the admin who last modified this record. Null if never modified.</summary>
     public string? UpdatedBy { get; protected set; }
-
-    /// <summary>
-    /// Records an update to this entity, setting <see cref="UpdatedAt"/> and <see cref="UpdatedBy"/>.
-    /// </summary>
-    /// <param name="updatedBy">The username of the admin performing the update.</param>
-    protected void RecordUpdate(string updatedBy)
-    {
-        UpdatedAt = DateTime.UtcNow;
-        UpdatedBy = updatedBy;
-    }
 }
