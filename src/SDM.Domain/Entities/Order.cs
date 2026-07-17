@@ -1,50 +1,108 @@
 using SDM.Domain.Common;
 using SDM.Domain.Enums;
+using SDM.Domain.ValueObjects;
 
 namespace SDM.Domain.Entities;
 
-public class Order : BaseEntity
+/// <summary>
+/// Represents a customer hardware purchase transaction.
+/// Contains customer contact details, a device reference, and one or more order items.
+/// Inherits audit fields from <see cref="AuditableEntity"/>.
+/// </summary>
+public class Order : AuditableEntity
 {
-    public string CustomerName { get; private set; } = string.Empty;
-    public string PhoneNumber { get; private set; } = string.Empty;
-    public string Address { get; private set; } = string.Empty;
-    public string DeviceId { get; private set; } = string.Empty;
-    public OrderStatus Status { get; private set; } = OrderStatus.Pending;
-    public List<OrderItem> Items { get; private set; } = [];
+    private readonly HashSet<OrderItem> _items = [];
 
+    /// <summary>Gets the full name of the customer who placed this order.</summary>
+    public string CustomerName { get; private set; } = string.Empty;
+
+    /// <summary>Gets the phone number of the customer.</summary>
+    public string PhoneNumber { get; private set; } = string.Empty;
+
+    /// <summary>Gets the delivery address of the customer.</summary>
+    public string Address { get; private set; } = string.Empty;
+
+    /// <summary>Gets the reference to the customer's device that initiated this order.</summary>
+    public DeviceReference Device { get; private set; } = null!;
+
+    /// <summary>Gets the current lifecycle status of this order.</summary>
+    public OrderStatus Status { get; private set; } = OrderStatus.Pending;
+
+    /// <summary>Gets optional notes added by admin. Null if not set.</summary>
+    public string? Notes { get; private set; }
+
+    /// <summary>
+    /// Gets the read-only collection of items in this order.
+    /// An order must have at least one item.
+    /// </summary>
+    public IReadOnlyCollection<OrderItem> Items => _items;
+
+    /// <summary>
+    /// Gets the total price of this order.
+    /// Computed: sum of (OrderItem.Price × OrderItem.Quantity). Not persisted.
+    /// </summary>
+    public decimal TotalPrice => _items.Sum(i => i.Price * i.Quantity);
+
+    /// <summary>Required by EF Core. Do not use directly.</summary>
     protected Order() { }
 
-    public Order(string customerName, string phoneNumber, string address, string deviceId)
+    /// <summary>
+    /// Creates a new <see cref="Order"/>.
+    /// </summary>
+    /// <param name="customerName">Full name of the customer. Required.</param>
+    /// <param name="phoneNumber">Customer phone number. Required.</param>
+    /// <param name="address">Delivery address. Required.</param>
+    /// <param name="device">Reference to the customer's device. Required.</param>
+    /// <param name="createdBy">Username of the admin or system creating this order.</param>
+    public Order(
+        string customerName,
+        string phoneNumber,
+        string address,
+        DeviceReference device,
+        string createdBy)
     {
         CustomerName = customerName;
         PhoneNumber = phoneNumber;
         Address = address;
-        DeviceId = deviceId;
+        Device = device;
         Status = OrderStatus.Pending;
+        CreatedBy = createdBy;
     }
 
-    public void AddItem(OrderItem item) => Items.Add(item);
-    public void UpdateStatus(OrderStatus status) => Status = status;
-    public decimal TotalPrice => Items.Sum(i => i.Price * i.Quantity);
-}
-
-public class OrderItem : BaseEntity
-{
-    public int OrderId { get; private set; }
-    public int ProductId { get; private set; }
-    public int Quantity { get; private set; }
-    public decimal Price { get; private set; }
-
-    public Order? Order { get; private set; }
-    public Product? Product { get; private set; }
-
-    protected OrderItem() { }
-
-    public OrderItem(int orderId, int productId, int quantity, decimal price)
+    /// <summary>
+    /// Adds an item to this order.
+    /// </summary>
+    /// <param name="item">The <see cref="OrderItem"/> to add. Must not be null.</param>
+    /// <exception cref="ArgumentNullException">Thrown when item is null.</exception>
+    public void AddItem(OrderItem item)
     {
-        OrderId = orderId;
-        ProductId = productId;
-        Quantity = quantity;
-        Price = price;
+        ArgumentNullException.ThrowIfNull(item);
+        _items.Add(item);
+    }
+
+    /// <summary>
+    /// Advances the order to a new status.
+    /// Terminal statuses (Delivered, Cancelled) cannot be changed.
+    /// </summary>
+    /// <param name="newStatus">The target <see cref="OrderStatus"/>.</param>
+    /// <param name="updatedBy">Username of the admin performing the action.</param>
+    /// <exception cref="InvalidOperationException">Thrown when the order is in a terminal state.</exception>
+    public void UpdateStatus(OrderStatus newStatus, string updatedBy)
+    {
+        if (Status == OrderStatus.Delivered || Status == OrderStatus.Cancelled)
+            throw new InvalidOperationException(
+                $"Cannot change status of an order that is already {Status}.");
+
+        Status = newStatus;
+        RecordUpdate(updatedBy);
+    }
+
+    /// <summary>Sets or updates the admin notes on this order.</summary>
+    /// <param name="notes">The note text. Null clears the notes.</param>
+    /// <param name="updatedBy">Username of the admin performing the action.</param>
+    public void SetNotes(string? notes, string updatedBy)
+    {
+        Notes = notes;
+        RecordUpdate(updatedBy);
     }
 }
