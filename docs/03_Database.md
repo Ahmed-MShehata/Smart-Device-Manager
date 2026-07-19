@@ -2,7 +2,7 @@
 
 # Database Design
 
-**Version:** 2.0  
+**Version:** 1.0  
 **Database Strategy:** Hybrid (Online + Offline)  
 **ORM:** Entity Framework Core 9  
 **Database Approach:** Code First
@@ -56,9 +56,8 @@ Responsibilities
 - Products
 - Orders
 - Software Packages
-- System Components
-- Notifications
-- Settings
+- Knowledge Base Articles
+- Company Profile
 - Diagnostic Rules
 - Administrator Accounts
 
@@ -138,8 +137,11 @@ Stores customer orders.
 Fields
 
 - Id
-- CustomerContact
-- DeviceReference
+- CustomerName
+- CustomerPhone
+- CustomerWhatsApp
+- CustomerGovernorate
+- CustomerAddress
 - Status
 - CreatedAt
 
@@ -161,33 +163,36 @@ Fields
 
 ## SoftwarePackage
 
-Stores software packages.
+Stores software and driver packages.
 
 Fields
 
 - Id
 - Name
+- Category (Application or Driver)
 - Version
-- Category
-- InstallerType
-- SilentInstallCommand
-- DetectionRule
-- SHA256
-- Size
-- RequiresRestart
-- Status
+- Description
+- IconUrl
+- SetupFileUrl
+- CreatedAt
+- UpdatedAt
 
 ---
 
-## SystemComponent
+## KnowledgeBaseArticle
 
-Stores Windows components.
+Stores troubleshooting guides for the customer application.
 
-Examples
+Fields
 
-- .NET Runtime
-- Visual C++
-- DirectX
+- Id
+- ProblemName
+- Description
+- ProblemImageUrl
+- YouTubeVideoUrl
+- Category
+- DisplayOrder
+- Visible
 
 ---
 
@@ -215,32 +220,22 @@ Contains diagnosis logic and recommended solutions.
 
 ---
 
-## Notification
+## CompanyProfile
 
-Stores notifications.
+Stores company profile information visible to the customer.
 
 Fields
 
 - Id
-- UserType
-- Title
-- Message
-- IsRead
-- IsPinned
-- CreatedAt
-
----
-
-## Setting
-
-Stores global system configuration.
-
-Examples
-
-- Company Information
-- WhatsApp Number
-- Support Phone
-- Application Settings
+- CompanyName
+- LogoUrl
+- Phone
+- WhatsApp
+- Email
+- Website
+- Facebook
+- Address
+- IsActive (Default: true)
 
 ---
 
@@ -251,7 +246,6 @@ The Domain uses Value Objects for immutable business data.
 Current Value Objects
 
 - DeviceReference
-- CustomerContact
 
 Benefits
 
@@ -266,9 +260,8 @@ Benefits
 Common Enumerations include
 
 - ProductCategory
-- InstallerType
+- SoftwareCategory
 - OrderStatus
-- NotificationType
 - UserRole
 
 ---

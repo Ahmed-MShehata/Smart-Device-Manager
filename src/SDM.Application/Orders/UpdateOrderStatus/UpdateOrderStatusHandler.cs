@@ -38,9 +38,6 @@ public sealed class UpdateOrderStatusHandler : ICommandHandler<UpdateOrderStatus
 
         order.UpdateStatus(command.NewStatus);
 
-        if (command.Notes is not null)
-            order.SetNotes(command.Notes);
-
         _unitOfWork.Orders.Update(order);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

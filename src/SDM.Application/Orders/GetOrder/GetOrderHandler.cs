@@ -7,8 +7,7 @@ namespace SDM.Application.Orders.GetOrder;
 
 /// <summary>
 /// Handles <see cref="GetOrderQuery"/>.
-/// Projects the full order, including all line items with product names, directly in SQL.
-/// Uses <see cref="IReadDbContext"/> for zero-tracking, read-only access.
+/// Projects the full order including all line items with product names in a single SQL query.
 /// </summary>
 public sealed class GetOrderHandler : IQueryHandler<GetOrderQuery, GetOrderResponse>
 {
@@ -26,25 +25,25 @@ public sealed class GetOrderHandler : IQueryHandler<GetOrderQuery, GetOrderRespo
             .Where(o => o.Id == query.Id)
             .Select(o => new GetOrderResponse
             {
-                Id           = o.Id,
-                CustomerName = o.CustomerName,
-                PhoneNumber  = o.PhoneNumber,
-                Address      = o.Address,
-                DeviceId     = o.Device.DeviceId,
-                Status       = o.Status,
-                Notes        = o.Notes,
-                TotalPrice   = o.Items.Sum(i => i.Price * i.Quantity),
-                CreatedAt    = o.CreatedAt,
-                UpdatedAt    = o.UpdatedAt,
-                CreatedBy    = o.CreatedBy,
-                Items        = o.Items.Select(i => new OrderItemResponse
+                Id                  = o.Id,
+                CustomerName        = o.CustomerName,
+                CustomerPhone       = o.CustomerPhone,
+                CustomerWhatsApp    = o.CustomerWhatsApp,
+                CustomerGovernorate = o.CustomerGovernorate,
+                CustomerAddress     = o.CustomerAddress,
+                Status              = o.Status,
+                TotalPrice          = o.Items.Sum(i => i.Price * i.Quantity),
+                CreatedAt           = o.CreatedAt,
+                UpdatedAt           = o.UpdatedAt,
+                Items               = o.Items.Select(i => new OrderItemResponse
                 {
-                    Id          = i.Id,
-                    ProductId   = i.ProductId,
-                    ProductName = i.Product != null ? i.Product.Name : string.Empty,
-                    Quantity    = i.Quantity,
-                    Price       = i.Price,
-                    LineTotal   = i.Price * i.Quantity
+                    Id              = i.Id,
+                    ProductId       = i.ProductId,
+                    ProductName     = i.Product != null ? i.Product.Name : string.Empty,
+                    ProductImageUrl = i.Product != null ? i.Product.ImagePath : null,
+                    Quantity        = i.Quantity,
+                    Price           = i.Price,
+                    LineTotal       = i.Price * i.Quantity
                 }).ToList()
             })
             .FirstOrDefaultAsync(cancellationToken);

@@ -140,29 +140,34 @@ Documents include:
 
 ---
 
-# Git Workflow
+# Git Responsibilities
 
-Standard workflow:
+Only the Product Owner is allowed to execute Git operations.
 
-```
-git add .
+The Developer (Claude) must NEVER:
 
-git commit -m "feat(module): description"
+- Run git add
+- Run git commit
+- Run git push
+- Create branches
+- Merge branches
+- Delete branches
+- Modify Git history
 
-git push
-```
+The Developer's responsibility ends after:
 
-Commit Types:
+- Implementation
+- Successful Build
+- Self Review
 
-- feat
-- fix
-- docs
-- refactor
-- style
-- test
-- chore
+The Product Owner is solely responsible for:
 
----
+- Reviewing the implementation
+- Approving the Sprint
+- Creating Git commits
+- Pushing to GitHub
+- Managing branches
+
 
 # Definition of Done (DoD)
 

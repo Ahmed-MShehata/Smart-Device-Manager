@@ -95,6 +95,9 @@ public static class InfrastructureServiceExtensions
         // JWT token generation
         services.AddScoped<IJwtProvider, JwtProvider>();
 
+        // SignalR-backed order notification — broadcasts OrderCreated to admin clients
+        services.AddScoped<IOrderNotificationService, OrderNotificationService>();
+
         return services;
     }
 }

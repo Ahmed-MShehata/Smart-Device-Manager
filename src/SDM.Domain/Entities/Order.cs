@@ -1,14 +1,14 @@
 using SDM.Domain.Common;
 using SDM.Domain.Enums;
-using SDM.Domain.ValueObjects;
 
 namespace SDM.Domain.Entities;
 
 /// <summary>
-/// Represents a customer hardware purchase transaction.
-/// Contains customer contact details, a device reference, and one or more order items.
-/// Audit fields (<c>CreatedBy</c>, <c>UpdatedBy</c>, <c>UpdatedAt</c>) are stamped
-/// automatically by Infrastructure — never by this entity.
+/// Represents a customer purchase order.
+/// Customer contact information (name, phone, WhatsApp, governorate, address)
+/// is collected from the locally stored onboarding profile and submitted
+/// with every order. No authentication or account is involved.
+/// Audit fields are stamped automatically by Infrastructure on save.
 /// </summary>
 public class Order : AuditableEntity
 {
@@ -18,19 +18,19 @@ public class Order : AuditableEntity
     public string CustomerName { get; private set; } = string.Empty;
 
     /// <summary>Gets the phone number of the customer.</summary>
-    public string PhoneNumber { get; private set; } = string.Empty;
+    public string CustomerPhone { get; private set; } = string.Empty;
+
+    /// <summary>Gets the WhatsApp number of the customer. Optional.</summary>
+    public string? CustomerWhatsApp { get; private set; }
+
+    /// <summary>Gets the governorate (region) of the customer. Required.</summary>
+    public string CustomerGovernorate { get; private set; } = string.Empty;
 
     /// <summary>Gets the delivery address of the customer.</summary>
-    public string Address { get; private set; } = string.Empty;
-
-    /// <summary>Gets the reference to the customer's device that initiated this order.</summary>
-    public DeviceReference Device { get; private set; } = null!;
+    public string CustomerAddress { get; private set; } = string.Empty;
 
     /// <summary>Gets the current lifecycle status of this order.</summary>
     public OrderStatus Status { get; private set; } = OrderStatus.Pending;
-
-    /// <summary>Gets optional notes added by admin. Null if not set.</summary>
-    public string? Notes { get; private set; }
 
     /// <summary>
     /// Gets the read-only collection of items in this order.
@@ -52,27 +52,27 @@ public class Order : AuditableEntity
     /// Status defaults to <see cref="OrderStatus.Pending"/>.
     /// Audit fields are stamped by Infrastructure on save.
     /// </summary>
-    /// <param name="customerName">Full name of the customer. Required.</param>
-    /// <param name="phoneNumber">Customer phone number. Required.</param>
-    /// <param name="address">Delivery address. Required.</param>
-    /// <param name="device">Reference to the customer's device. Required.</param>
+    /// <param name="customerName">Full name. Required.</param>
+    /// <param name="customerPhone">Phone number. Required.</param>
+    /// <param name="customerWhatsApp">WhatsApp number. Optional.</param>
+    /// <param name="customerGovernorate">Governorate / region. Required.</param>
+    /// <param name="customerAddress">Delivery address. Required.</param>
     public Order(
         string customerName,
-        string phoneNumber,
-        string address,
-        DeviceReference device)
+        string customerPhone,
+        string? customerWhatsApp,
+        string customerGovernorate,
+        string customerAddress)
     {
         CustomerName = customerName;
-        PhoneNumber = phoneNumber;
-        Address = address;
-        Device = device;
+        CustomerPhone = customerPhone;
+        CustomerWhatsApp = customerWhatsApp;
+        CustomerGovernorate = customerGovernorate;
+        CustomerAddress = customerAddress;
         Status = OrderStatus.Pending;
     }
 
-    /// <summary>
-    /// Adds an item to this order.
-    /// </summary>
-    /// <param name="item">The <see cref="OrderItem"/> to add. Must not be null.</param>
+    /// <summary>Adds an item to this order.</summary>
     /// <exception cref="ArgumentNullException">Thrown when item is null.</exception>
     public void AddItem(OrderItem item)
     {
@@ -84,8 +84,7 @@ public class Order : AuditableEntity
     /// Advances the order to a new status.
     /// Terminal statuses (Delivered, Cancelled) cannot be changed.
     /// </summary>
-    /// <param name="newStatus">The target <see cref="OrderStatus"/>.</param>
-    /// <exception cref="InvalidOperationException">Thrown when the order is in a terminal state.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when order is in terminal state.</exception>
     public void UpdateStatus(OrderStatus newStatus)
     {
         if (Status == OrderStatus.Delivered || Status == OrderStatus.Cancelled)
@@ -93,12 +92,5 @@ public class Order : AuditableEntity
                 $"Cannot change status of an order that is already {Status}.");
 
         Status = newStatus;
-    }
-
-    /// <summary>Sets or updates the admin notes on this order.</summary>
-    /// <param name="notes">The note text. Null clears the notes.</param>
-    public void SetNotes(string? notes)
-    {
-        Notes = notes;
     }
 }

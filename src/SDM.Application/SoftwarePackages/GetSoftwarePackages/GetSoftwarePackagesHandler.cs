@@ -5,23 +5,21 @@ using SDM.Application.Interfaces;
 
 namespace SDM.Application.SoftwarePackages.GetSoftwarePackages;
 
-/// <summary>
-/// Handles <see cref="GetSoftwarePackagesQuery"/> returning data via <see cref="IReadDbContext"/>.
-/// </summary>
-public sealed class GetSoftwarePackagesHandler : IQueryHandler<GetSoftwarePackagesQuery, PaginationResponse<GetSoftwarePackagesResponse>>
+/// <summary>Handles <see cref="GetSoftwarePackagesQuery"/> with server-side pagination, filter, and sort.</summary>
+public sealed class GetSoftwarePackagesHandler
+    : IQueryHandler<GetSoftwarePackagesQuery, PaginationResponse<GetSoftwarePackagesResponse>>
 {
     private readonly IReadDbContext _db;
 
-    /// <summary>Initializes a new instance of <see cref="GetSoftwarePackagesHandler"/>.</summary>
     public GetSoftwarePackagesHandler(IReadDbContext db) => _db = db;
 
-    /// <inheritdoc/>
     public async Task<Result<PaginationResponse<GetSoftwarePackagesResponse>>> Handle(
         GetSoftwarePackagesQuery query,
         CancellationToken cancellationToken)
     {
         var q = _db.SoftwarePackages.AsQueryable();
 
+        // Search by name or category
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
             q = q.Where(p =>
@@ -29,20 +27,17 @@ public sealed class GetSoftwarePackagesHandler : IQueryHandler<GetSoftwarePackag
                 EF.Functions.Like(p.Category, $"%{query.Search}%"));
         }
 
-        if (query.Status.HasValue)
-            q = q.Where(p => p.Status == query.Status.Value);
+        // Filter by category (Application | Driver)
+        if (!string.IsNullOrWhiteSpace(query.Category))
+            q = q.Where(p => p.Category == query.Category);
 
-        if (query.InstallerType.HasValue)
-            q = q.Where(p => p.InstallerType == query.InstallerType.Value);
-
+        // Sort
         q = (query.SortBy, query.Descending) switch
         {
-            (SoftwarePackageSortBy.Name, false)      => q.OrderBy(p => p.Name),
-            (SoftwarePackageSortBy.Name, true)       => q.OrderByDescending(p => p.Name),
-            (SoftwarePackageSortBy.Category, false)  => q.OrderBy(p => p.Category),
-            (SoftwarePackageSortBy.Category, true)   => q.OrderByDescending(p => p.Category),
-            (SoftwarePackageSortBy.Size, false)      => q.OrderBy(p => p.Size),
-            (SoftwarePackageSortBy.Size, true)       => q.OrderByDescending(p => p.Size),
+            (SoftwarePackageSortBy.Name,      false) => q.OrderBy(p => p.Name),
+            (SoftwarePackageSortBy.Name,      true)  => q.OrderByDescending(p => p.Name),
+            (SoftwarePackageSortBy.Category,  false) => q.OrderBy(p => p.Category),
+            (SoftwarePackageSortBy.Category,  true)  => q.OrderByDescending(p => p.Category),
             (SoftwarePackageSortBy.CreatedAt, false) => q.OrderBy(p => p.CreatedAt),
             (SoftwarePackageSortBy.CreatedAt, true)  => q.OrderByDescending(p => p.CreatedAt),
             _                                        => q.OrderBy(p => p.Name)
@@ -55,19 +50,18 @@ public sealed class GetSoftwarePackagesHandler : IQueryHandler<GetSoftwarePackag
             .Take(query.PageSize)
             .Select(p => new GetSoftwarePackagesResponse
             {
-                Id            = p.Id,
-                Name          = p.Name,
-                Version       = p.Version,
-                Category      = p.Category,
-                Size          = p.Size,
-                InstallerType = p.InstallerType,
-                Status        = p.Status,
-                CreatedAt     = p.CreatedAt
+                Id        = p.Id,
+                Name      = p.Name,
+                Category  = p.Category,
+                Version   = p.Version,
+                IconUrl   = p.IconUrl,
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt
             })
             .ToListAsync(cancellationToken);
 
         var pagination = PaginationRequest.Create(query.Page, query.PageSize);
-        var response = PaginationResponse<GetSoftwarePackagesResponse>.Create(items, totalCount, pagination);
+        var response   = PaginationResponse<GetSoftwarePackagesResponse>.Create(items, totalCount, pagination);
 
         return Result<PaginationResponse<GetSoftwarePackagesResponse>>.Success(response);
     }

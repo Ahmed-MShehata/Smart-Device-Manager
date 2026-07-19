@@ -18,11 +18,18 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
             .IsRequired()
             .HasMaxLength(200);
 
-        builder.Property(x => x.PhoneNumber)
+        builder.Property(x => x.CustomerPhone)
             .IsRequired()
-            .HasMaxLength(20);
+            .HasMaxLength(30);
 
-        builder.Property(x => x.Address)
+        builder.Property(x => x.CustomerWhatsApp)
+            .HasMaxLength(30);
+
+        builder.Property(x => x.CustomerGovernorate)
+            .IsRequired()
+            .HasMaxLength(100);
+
+        builder.Property(x => x.CustomerAddress)
             .IsRequired()
             .HasMaxLength(500);
 
@@ -30,9 +37,6 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
             .IsRequired()
             .HasConversion<int>()
             .HasDefaultValue(Domain.Enums.OrderStatus.Pending);
-
-        builder.Property(x => x.Notes)
-            .HasMaxLength(1000);
 
         // Audit fields
         builder.Property(x => x.CreatedAt).IsRequired();
@@ -45,17 +49,6 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
 
         // Optimistic concurrency token — managed by SQL Server
         builder.Property(x => x.RowVersion).IsRowVersion();
-
-        // ─── DeviceReference Owned Type ────────────────────────────────────
-        // Maps the DeviceReference value object as an owned entity.
-        // DeviceId is stored as a column on the Orders table (not a separate table).
-        builder.OwnsOne(o => o.Device, device =>
-        {
-            device.Property(d => d.DeviceId)
-                .HasColumnName("DeviceId")
-                .IsRequired()
-                .HasMaxLength(100);
-        });
 
         // ─── Items Collection (backing field) ──────────────────────────────
         builder.HasMany(o => o.Items)

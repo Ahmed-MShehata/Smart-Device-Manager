@@ -49,6 +49,15 @@ try
         c.SwaggerDoc("v1", new() { Title = "Smart Device Manager API", Version = "v1" });
     });
 
+    // ─── HTTPS Redirection ─────────────────────────────────────────────────
+    // Port 7156 is declared explicitly so UseHttpsRedirection() can redirect
+    // correctly even when the HTTP-only launch profile is active.
+    // Kestrel binds both ports via appsettings.Development.json → Kestrel:Endpoints.
+    builder.Services.AddHttpsRedirection(options =>
+    {
+        options.HttpsPort = 7156;
+    });
+
     // ─── CORS ──────────────────────────────────────────────────────────────
     builder.Services.AddCors(options =>
     {

@@ -2,74 +2,73 @@
 
 # System Architecture
 
-**Version:** 2.0
+**Version:** 1.0
 **Architecture Style:** Clean Architecture
-**Development Model:** Offline First
 **Framework:** .NET 9
 
 ---
 
 # Architecture Overview
 
-Smart Device Manager follows a modern layered architecture based on
-Clean Architecture principles.
+Smart Device Manager follows a layered Clean Architecture.
 
-The architecture separates responsibilities into independent layers,
-making the system easier to maintain, test, and extend.
+The system is split into two frontend portals — Admin Portal and Customer Application — both backed by the same ASP.NET Core 9 REST API.
 
-The project also follows the CQRS pattern to separate read operations
-from write operations.
+Each portal is a React 19 web application embedded inside a WPF desktop shell using WebView2.
 
 ---
 
 # High-Level Architecture
 
-+------------------------------------------------------+
-| Customer Desktop Application (WPF + WebView2)        |
-+------------------------------------------------------+
+```
++--------------------------------------------------+
+|  Admin Portal  (WPF + WebView2 + React 19)       |
++--------------------------------------------------+
 
-+------------------------------------------------------+
-| Admin Desktop Application (WPF + WebView2)           |
-+------------------------------------------------------+
++--------------------------------------------------+
+|  Customer Application  (WPF + WebView2 + React 19)|
++--------------------------------------------------+
 
                        │
                        ▼
 
-+------------------------------------------------------+
-| ASP.NET Core 9 Web API                               |
-+------------------------------------------------------+
++--------------------------------------------------+
+|  ASP.NET Core 9 Web API                          |
++--------------------------------------------------+
 
                        │
 
-+------------------------------------------------------+
-| Application Layer                                    |
-| CQRS + MediatR + FluentValidation                    |
-+------------------------------------------------------+
++--------------------------------------------------+
+|  Application Layer                               |
+|  CQRS + MediatR + FluentValidation               |
++--------------------------------------------------+
 
                        │
 
-+------------------------------------------------------+
-| Domain Layer                                         |
-| Entities + Value Objects + Business Rules            |
-+------------------------------------------------------+
++--------------------------------------------------+
+|  Domain Layer                                    |
+|  Entities + Value Objects + Business Rules       |
++--------------------------------------------------+
 
                        │
 
-+------------------------------------------------------+
-| Infrastructure Layer                                 |
-| EF Core + SQL Server + SQLite + JWT + SignalR        |
-+------------------------------------------------------+
++--------------------------------------------------+
+|  Infrastructure Layer                            |
+|  EF Core + SQL Server + SQLite + JWT + SignalR   |
++--------------------------------------------------+
 
                        │
 
-+------------------------------------------------------+
-| SQL Server / SQLite                                  |
-+------------------------------------------------------+
++--------------------------------------------------+
+|  SQL Server / SQLite                             |
++--------------------------------------------------+
+```
 
 ---
 
 # Solution Structure
 
+```
 SDM.sln
 
 - SDM.API
@@ -77,8 +76,9 @@ SDM.sln
 - SDM.Domain
 - SDM.Infrastructure
 - SDM.SharedKernel
-- SDM.CustomerApp
-- SDM.AdminApp
+- SDM.AdminApp         (WPF Host for Admin Portal)
+- SDM.CustomerApp      (WPF Host for Customer Application)
+```
 
 ---
 
@@ -95,9 +95,10 @@ Responsibilities
 
 Technology
 
-- WPF
-- WebView2
-- MVVM
+- WPF (shell host)
+- WebView2 (React renderer)
+- React 19
+- TypeScript
 
 Rules
 
@@ -211,39 +212,74 @@ Domain depends on nothing.
 
 # CQRS Architecture
 
-Command
+Command → Handler → Repository → Database
 
-↓
-
-Handler
-
-↓
-
-Repository
-
-↓
-
-Database
-
-----------------------------
-
-Query
-
-↓
-
-Handler
-
-↓
-
-Repository
-
-↓
-
-Database
+Query → Handler → Repository → Database
 
 Commands modify data.
 
 Queries return data only.
+
+---
+
+# Portal Architecture
+
+## Admin Portal
+
+Pages:
+
+- Login
+- Dashboard
+- Orders Management
+- Software Management
+- Knowledge Base Management
+- Device Monitor
+- Users
+- Company Information
+- Settings
+
+---
+
+## Customer Application
+
+Pages:
+
+- Dashboard
+- Device Details
+- Device Check
+- Software Center
+- Knowledge Base
+- Orders
+- Company Information
+
+---
+
+# Shared Component Rule
+
+The following UI component is shared across both portals:
+
+**DeviceHardwarePanel**
+
+Used in:
+
+- Customer Application → Device Details page
+- Admin Portal → Device Monitor page
+
+The component must not be duplicated. A single implementation is maintained and imported by both portals.
+
+---
+
+# SignalR Notification Architecture
+
+When a customer submits an order:
+
+1. The Customer Application posts the order to the API.
+2. The API dispatches a SignalR event to all connected admin clients.
+3. The WPF layer on the Admin application receives the event.
+4. A native Windows notification is displayed.
+5. Clicking the notification navigates to Orders Management.
+
+There is no standalone Notifications page in either portal.
 
 ---
 
@@ -282,7 +318,7 @@ Contains
 
 # Validation
 
-Input validation is implemented using FluentValidation.
+Input validation uses FluentValidation.
 
 Benefits
 
@@ -294,11 +330,11 @@ Benefits
 
 # Authentication
 
-Authentication uses JWT.
+JWT-based authentication.
 
 Only administrators authenticate.
 
-Customers use the application without creating an account.
+Customers use the application without an account.
 
 ---
 
@@ -310,31 +346,6 @@ Roles
 
 - Super Admin
 - Admin
-
----
-
-# Offline First
-
-The application always works offline.
-
-SQLite stores:
-
-- Device Information
-- Local Settings
-- Cached Diagnostics
-- Pending Synchronization
-
-Synchronization occurs automatically once Internet becomes available.
-
----
-
-# SignalR
-
-Used for
-
-- Notifications
-- Order Updates
-- System Messages
 
 ---
 
@@ -375,8 +386,6 @@ Role Authorization
 
 Input Validation
 
-SHA256 Package Verification
-
 ---
 
 # Architecture Rules
@@ -389,17 +398,17 @@ SHA256 Package Verification
 
 ✔ Unit of Work
 
-✔ Offline First
-
 ✔ Thin Controllers
 
 ✔ Result Pattern
 
 ✔ FluentValidation
 
-✔ SignalR
+✔ SignalR (order notifications only)
 
 ✔ Dependency Injection
+
+✔ Shared UI Components between portals
 
 ---
 
@@ -419,16 +428,18 @@ SHA256 Package Verification
 
 ❌ Direct Database Access from Desktop Applications
 
+❌ Duplicating shared UI components (e.g. DeviceHardwarePanel) between portals
+
 ---
 
 # Future Architecture
 
 Future versions may include
 
-- AI Assistant
-- Driver Repository
-- Mobile Application
-- Cloud Synchronization
+- AI Diagnostic Assistant
 - Remote Support
+- Cloud Synchronization
+- Mobile Application
+- Multi-language Support
 
 Current architecture is designed to support these features without major redesign.

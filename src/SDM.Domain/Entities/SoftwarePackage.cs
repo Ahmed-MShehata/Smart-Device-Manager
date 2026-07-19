@@ -1,128 +1,98 @@
 using SDM.Domain.Common;
-using SDM.Domain.Enums;
 
 namespace SDM.Domain.Entities;
 
 /// <summary>
-/// Represents a software package that the admin uploads and customers can silently install.
-/// Audit fields (<c>CreatedBy</c>, <c>UpdatedBy</c>, <c>UpdatedAt</c>) are stamped
-/// automatically by Infrastructure — never by this entity.
+/// Represents a software application or driver that the admin uploads
+/// for customers to browse and install via the Software Center.
+///
+/// Update workflow:
+///   - First time: Admin creates with all fields including setup file.
+///   - Future versions: Admin calls <see cref="UpdateSetupFile"/> providing
+///     a new setup file. Name, Category, Description, and IconUrl are preserved.
+///
+/// Version is extracted automatically from the file when possible.
+/// No silent install command. No detection rule. No installer type.
+/// Customers run the standard setup wizard.
+///
+/// Audit fields are stamped automatically by Infrastructure on save.
+/// CreatedAt = upload date. UpdatedAt = last file replacement date.
 /// </summary>
 public class SoftwarePackage : AuditableEntity
 {
-    /// <summary>Gets the display name of the package.</summary>
+    /// <summary>Gets the display name of the software.</summary>
     public string Name { get; private set; } = string.Empty;
 
-    /// <summary>Gets the version string (e.g., "1.0.0").</summary>
-    public string Version { get; private set; } = string.Empty;
-
-    /// <summary>Gets the category of this package (e.g., Browser, Antivirus).</summary>
+    /// <summary>Gets the category: Application or Driver.</summary>
     public string Category { get; private set; } = string.Empty;
 
-    /// <summary>Gets the description explaining what this package does.</summary>
+    /// <summary>Gets the version string (e.g., "1.0.0"). Auto-extracted when possible.</summary>
+    public string Version { get; private set; } = string.Empty;
+
+    /// <summary>Gets the admin-authored description of what this software does.</summary>
     public string Description { get; private set; } = string.Empty;
 
-    /// <summary>Gets the server-side file path or download URL.</summary>
-    public string FilePath { get; private set; } = string.Empty;
+    /// <summary>Gets the server-side relative path to the icon image. Null if not uploaded.</summary>
+    public string? IconUrl { get; private set; }
 
-    /// <summary>Gets the command used to silently install this package (e.g., "/S /quiet").</summary>
-    public string SilentInstallCommand { get; private set; } = string.Empty;
-
-    /// <summary>Gets the logic used to detect whether this package is already installed.</summary>
-    public string DetectionRule { get; private set; } = string.Empty;
-
-    /// <summary>Gets the SHA-256 hash of the installer file. Must be exactly 64 lowercase hex characters.</summary>
-    public string SHA256 { get; private set; } = string.Empty;
-
-    /// <summary>Gets the file size in bytes. Must be greater than zero.</summary>
-    public long Size { get; private set; }
-
-    /// <summary>Gets the installer format type (EXE, MSI, or ZIP).</summary>
-    public InstallerType InstallerType { get; private set; }
-
-    /// <summary>Gets a value indicating whether installing this package requires a system restart.</summary>
-    public bool RequiresRestart { get; private set; }
-
-    /// <summary>Gets the current availability status of this package.</summary>
-    public PackageStatus Status { get; private set; } = PackageStatus.Active;
+    /// <summary>Gets the server-side relative path to the setup file.</summary>
+    public string SetupFileUrl { get; private set; } = string.Empty;
 
     /// <summary>Required by EF Core. Do not use directly.</summary>
     protected SoftwarePackage() { }
 
     /// <summary>
     /// Creates a new <see cref="SoftwarePackage"/>.
-    /// Status defaults to <see cref="PackageStatus.Active"/>.
     /// Audit fields are stamped by Infrastructure on save.
     /// </summary>
     /// <param name="name">Display name. Required.</param>
+    /// <param name="category">Application or Driver. Required.</param>
     /// <param name="version">Version string. Required.</param>
-    /// <param name="category">Package category. Required.</param>
-    /// <param name="description">Package description. Required.</param>
-    /// <param name="filePath">Server file path or URL. Required.</param>
-    /// <param name="silentInstallCommand">Silent install command. Required and non-empty.</param>
-    /// <param name="detectionRule">Detection logic string. Required and non-empty.</param>
-    /// <param name="sha256">64-character lowercase hex SHA-256 hash. Required.</param>
-    /// <param name="size">File size in bytes. Must be greater than zero.</param>
-    /// <param name="installerType">Installer format (EXE, MSI, ZIP).</param>
-    /// <param name="requiresRestart">Whether a restart is required after installation.</param>
+    /// <param name="description">Description. Required.</param>
+    /// <param name="setupFileUrl">Setup file path. Required.</param>
+    /// <param name="iconUrl">Optional icon path.</param>
     public SoftwarePackage(
         string name,
-        string version,
         string category,
+        string version,
         string description,
-        string filePath,
-        string silentInstallCommand,
-        string detectionRule,
-        string sha256,
-        long size,
-        InstallerType installerType,
-        bool requiresRestart = false)
+        string setupFileUrl,
+        string? iconUrl = null)
     {
         Name = name;
-        Version = version;
         Category = category;
+        Version = version;
         Description = description;
-        FilePath = filePath;
-        SilentInstallCommand = silentInstallCommand;
-        DetectionRule = detectionRule;
-        SHA256 = sha256;
-        Size = size;
-        InstallerType = installerType;
-        RequiresRestart = requiresRestart;
-        Status = PackageStatus.Active;
+        SetupFileUrl = setupFileUrl;
+        IconUrl = iconUrl;
     }
 
-    /// <summary>Sets the availability status of this package.</summary>
-    /// <param name="status">The new <see cref="PackageStatus"/>.</param>
-    public void SetStatus(PackageStatus status)
-    {
-        Status = status;
-    }
-
-    /// <summary>Updates the editable metadata of this package.</summary>
-    public void Update(
+    /// <summary>
+    /// Updates the metadata fields: Name, Category, Description, IconUrl.
+    /// Does NOT touch the setup file or version.
+    /// </summary>
+    public void UpdateMetadata(
         string name,
-        string version,
         string category,
         string description,
-        string filePath,
-        string silentInstallCommand,
-        string detectionRule,
-        string sha256,
-        long size,
-        InstallerType installerType,
-        bool requiresRestart)
+        string? iconUrl)
     {
         Name = name;
-        Version = version;
         Category = category;
         Description = description;
-        FilePath = filePath;
-        SilentInstallCommand = silentInstallCommand;
-        DetectionRule = detectionRule;
-        SHA256 = sha256;
-        Size = size;
-        InstallerType = installerType;
-        RequiresRestart = requiresRestart;
+        IconUrl = iconUrl;
+    }
+
+    /// <summary>
+    /// Replaces the setup file and updates the version.
+    /// Name, Category, Description, and IconUrl are preserved.
+    /// The audit UpdatedAt is stamped automatically by Infrastructure.
+    /// </summary>
+    /// <param name="newSetupFileUrl">New setup file path. Required.</param>
+    /// <param name="newVersion">New version string (auto-extracted or manual).</param>
+    public void UpdateSetupFile(string newSetupFileUrl, string newVersion)
+    {
+        SetupFileUrl = newSetupFileUrl;
+        Version = newVersion;
     }
 }

@@ -1,46 +1,41 @@
 using SDM.Application.Common.CQRS;
-using SDM.Domain.Enums;
 
 namespace SDM.Application.SoftwarePackages.UpdateSoftwarePackage;
 
 /// <summary>
-/// Command to update the details of an existing software package.
+/// Command to update an existing software package.
+/// Split into two operation modes:
+///   1. Metadata update only (Name, Category, Description, IconUrl — no file replacement).
+///   2. Setup file replacement — new Version and SetupFileUrl replace the existing ones.
+///      Metadata fields are still updated in the same call.
+/// The handler detects whether a new setup file was provided via <see cref="NewSetupFileUrl"/>.
 /// </summary>
 public sealed class UpdateSoftwarePackageCommand : ICommand
 {
     /// <summary>Gets the unique identifier of the package. Supplied by the route.</summary>
     public Guid Id { get; init; }
 
-    /// <summary>Gets the display name of the package. Required.</summary>
+    /// <summary>Gets the updated display name. Required.</summary>
     public string Name { get; init; } = string.Empty;
 
-    /// <summary>Gets the version string. Required.</summary>
-    public string Version { get; init; } = string.Empty;
-
-    /// <summary>Gets the category. Required.</summary>
+    /// <summary>Gets the updated category (Application or Driver). Required.</summary>
     public string Category { get; init; } = string.Empty;
 
-    /// <summary>Gets the package description. Required.</summary>
+    /// <summary>Gets the updated description. Required.</summary>
     public string Description { get; init; } = string.Empty;
 
-    /// <summary>Gets the server-side file path or download URL. Required.</summary>
-    public string FilePath { get; init; } = string.Empty;
+    /// <summary>Gets the updated icon file path. Null to keep the existing icon.</summary>
+    public string? IconUrl { get; init; }
 
-    /// <summary>Gets the command used to silently install this package. Required.</summary>
-    public string SilentInstallCommand { get; init; } = string.Empty;
+    /// <summary>
+    /// Gets the new setup file path when the admin is replacing the installer.
+    /// Null means metadata-only update (Version stays the same).
+    /// </summary>
+    public string? NewSetupFileUrl { get; init; }
 
-    /// <summary>Gets the logic used to detect whether this package is installed. Required.</summary>
-    public string DetectionRule { get; init; } = string.Empty;
-
-    /// <summary>Gets the 64-character lowercase hex SHA-256 hash. Required.</summary>
-    public string SHA256 { get; init; } = string.Empty;
-
-    /// <summary>Gets the file size in bytes. Must be greater than zero.</summary>
-    public long Size { get; init; }
-
-    /// <summary>Gets the installer format type. Required.</summary>
-    public InstallerType InstallerType { get; init; }
-
-    /// <summary>Gets whether this package requires a restart after installation.</summary>
-    public bool RequiresRestart { get; init; }
+    /// <summary>
+    /// Gets the new version string when replacing the setup file.
+    /// Required when <see cref="NewSetupFileUrl"/> is provided.
+    /// </summary>
+    public string? NewVersion { get; init; }
 }

@@ -2,7 +2,7 @@
 
 # API Design Document
 
-**Version:** 2.0
+**Version:** 1.0
 **Framework:** ASP.NET Core 9
 **Architecture:** REST API
 **Pattern:** CQRS
@@ -124,8 +124,10 @@ Anonymous Endpoints
 
 - Product Catalog
 - Create Order
+- Software Package List
+- Knowledge Base Articles
+- Company Profile
 - Download Diagnostic Data
-- Package List
 
 Protected Endpoints
 
@@ -193,6 +195,20 @@ Global Exception Middleware handles all exceptions.
 Responses are converted into the standard Result format.
 
 No internal exception details are exposed.
+
+---
+
+# CQRS & Repository Definitions
+
+The architecture strictly enforces MediatR and repository abstraction. The following Matrix maps every core Entity to its corresponding REST Endpoints, Clean Architecture elements, and Interface.
+
+| Entity | Repository | Queries (GET) | Commands (POST/PUT/DEL) | DTOs |
+| :--- | :--- | :--- | :--- | :--- |
+| **Product** | `IProductRepository` | `GetProductsQuery`, `GetProductByIdQuery` | `CreateProductCommand`, `UpdateProductCommand`, `DeleteProductCommand` | `ProductDto`, `CreateProductDto`, `UpdateProductDto` |
+| **Order** | `IOrderRepository` | `GetOrdersQuery`, `GetOrderByIdQuery` | `CreateOrderCommand`, `UpdateOrderStatusCommand` | `OrderDto`, `CreateOrderDto`, `UpdateOrderStatusDto` |
+| **SoftwarePackage** | `ISoftwarePackageRepository` | `GetPackagesQuery`, `GetPackageByIdQuery` | `UploadPackageCommand` | `SoftwarePackageDto`, `UploadPackageDto` |
+| **KnowledgeBaseArticle** | `IKnowledgeBaseRepository` | `GetArticlesQuery`, `GetArticleByIdQuery` | `CreateArticleCommand`, `UpdateArticleCommand`, `DeleteArticleCommand` | `ArticleDto`, `CreateArticleDto`, `UpdateArticleDto` |
+| **CompanyProfile** | `ICompanyProfileRepository`| `GetCompanyProfileQuery` | `UpdateCompanyProfileCommand` | `CompanyProfileDto`, `UpdateCompanyProfileDto` |
 
 ---
 
@@ -304,8 +320,11 @@ Customer Endpoint
 
 Includes
 
-- Customer Contact
-- Device Reference
+- Customer Name
+- Customer Phone
+- Customer WhatsApp
+- Customer Governorate
+- Customer Address
 - Order Items
 
 ---
@@ -374,23 +393,39 @@ DELETE
 
 ---
 
-# System Component APIs
+# Knowledge Base APIs
+
+## Get Articles
 
 GET
 
 ```
-/api/v1/components
+/api/v1/knowledge-base
 ```
+
+## Create Article
 
 POST
 
 ```
-/api/v1/components
+/api/v1/knowledge-base
 ```
+
+## Update Article
 
 PUT
 
+```
+/api/v1/knowledge-base/{id}
+```
+
+## Delete Article
+
 DELETE
+
+```
+/api/v1/knowledge-base/{id}
+```
 
 ---
 
@@ -428,34 +463,18 @@ Downloads updated diagnostic rules.
 
 ---
 
-# Notification APIs
+# Company Profile APIs
 
 GET
 
 ```
-/api/v1/notifications
+/api/v1/company
 ```
 
 PUT
 
 ```
-/api/v1/notifications/read
-```
-
----
-
-# Settings APIs
-
-GET
-
-```
-/api/v1/settings
-```
-
-PUT
-
-```
-/api/v1/settings
+/api/v1/company
 ```
 
 ---
@@ -527,9 +546,6 @@ SignalR Hub
 Used For
 
 - Order Notifications
-- Package Updates
-- System Messages
-- Admin Alerts
 
 ---
 

@@ -18,58 +18,34 @@ internal sealed class SoftwarePackageConfiguration : IEntityTypeConfiguration<So
             .IsRequired()
             .HasMaxLength(200);
 
-        builder.Property(x => x.Version)
+        // Category is stored as a string (Application | Driver) for readability in the database.
+        builder.Property(x => x.Category)
             .IsRequired()
             .HasMaxLength(50);
 
-        builder.Property(x => x.Category)
+        builder.Property(x => x.Version)
             .IsRequired()
-            .HasMaxLength(100);
+            .HasMaxLength(50);
 
         builder.Property(x => x.Description)
             .IsRequired()
             .HasMaxLength(2000);
 
-        builder.Property(x => x.FilePath)
+        builder.Property(x => x.SetupFileUrl)
             .IsRequired()
             .HasMaxLength(500);
 
-        builder.Property(x => x.SilentInstallCommand)
-            .IsRequired()
+        builder.Property(x => x.IconUrl)
             .HasMaxLength(500);
 
-        builder.Property(x => x.DetectionRule)
-            .IsRequired()
-            .HasMaxLength(500);
-
-        builder.Property(x => x.SHA256)
-            .IsRequired()
-            .HasMaxLength(64);
-
-        builder.Property(x => x.Size)
-            .IsRequired();
-
-        builder.Property(x => x.InstallerType)
-            .IsRequired()
-            .HasConversion<int>();
-
-        builder.Property(x => x.RequiresRestart)
-            .IsRequired()
-            .HasDefaultValue(false);
-
-        builder.Property(x => x.Status)
-            .IsRequired()
-            .HasConversion<int>()
-            .HasDefaultValue(Domain.Enums.PackageStatus.Active);
-
-        // Audit fields
+        // Audit fields — CreatedAt = upload date, UpdatedAt = last file replacement date
         builder.Property(x => x.CreatedAt).IsRequired();
         builder.Property(x => x.CreatedBy).IsRequired().HasMaxLength(100);
         builder.Property(x => x.UpdatedAt);
         builder.Property(x => x.UpdatedBy).HasMaxLength(100);
 
-        // Unique constraint: Name + Version combination
-        builder.HasIndex(x => new { x.Name, x.Version }).IsUnique();
+        // Name must be unique
+        builder.HasIndex(x => x.Name).IsUnique();
 
         // Optimistic concurrency token — managed by SQL Server
         builder.Property(x => x.RowVersion).IsRowVersion();

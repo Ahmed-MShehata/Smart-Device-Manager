@@ -15,7 +15,7 @@ public sealed class GetOrdersResponse
     public string CustomerName { get; init; } = string.Empty;
 
     /// <summary>Gets the customer's phone number.</summary>
-    public string PhoneNumber { get; init; } = string.Empty;
+    public string CustomerPhone { get; init; } = string.Empty;
 
     /// <summary>Gets the current lifecycle status of the order.</summary>
     public OrderStatus Status { get; init; }

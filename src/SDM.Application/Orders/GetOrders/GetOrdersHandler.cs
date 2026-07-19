@@ -35,7 +35,7 @@ public sealed class GetOrdersHandler
         {
             q = q.Where(o =>
                 EF.Functions.Like(o.CustomerName, $"%{query.Search}%") ||
-                EF.Functions.Like(o.PhoneNumber,  $"%{query.Search}%"));
+                EF.Functions.Like(o.CustomerPhone,  $"%{query.Search}%"));
         }
 
         // ─── Filter ───────────────────────────────────────────────────────────
@@ -64,7 +64,7 @@ public sealed class GetOrdersHandler
             {
                 Id           = o.Id,
                 CustomerName = o.CustomerName,
-                PhoneNumber  = o.PhoneNumber,
+                CustomerPhone = o.CustomerPhone,
                 Status       = o.Status,
                 TotalPrice   = o.Items.Sum(i => i.Price * i.Quantity),
                 ItemCount    = o.Items.Count,

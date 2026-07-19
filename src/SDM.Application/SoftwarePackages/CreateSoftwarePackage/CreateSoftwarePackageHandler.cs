@@ -7,9 +7,10 @@ namespace SDM.Application.SoftwarePackages.CreateSoftwarePackage;
 
 /// <summary>
 /// Handles <see cref="CreateSoftwarePackageCommand"/>.
-/// Maps the input to a new <see cref="SoftwarePackage"/> entity and commits to the database via UnitOfWork.
+/// Creates and persists a new <see cref="SoftwarePackage"/> entity.
 /// </summary>
-public sealed class CreateSoftwarePackageHandler : ICommandHandler<CreateSoftwarePackageCommand, CreateSoftwarePackageResponse>
+public sealed class CreateSoftwarePackageHandler
+    : ICommandHandler<CreateSoftwarePackageCommand, CreateSoftwarePackageResponse>
 {
     private readonly IUnitOfWork _unitOfWork;
 
@@ -23,16 +24,11 @@ public sealed class CreateSoftwarePackageHandler : ICommandHandler<CreateSoftwar
     {
         var package = new SoftwarePackage(
             command.Name,
-            command.Version,
             command.Category,
+            command.Version,
             command.Description,
-            command.FilePath,
-            command.SilentInstallCommand,
-            command.DetectionRule,
-            command.SHA256.ToLowerInvariant(),
-            command.Size,
-            command.InstallerType,
-            command.RequiresRestart);
+            command.SetupFileUrl,
+            command.IconUrl);
 
         await _unitOfWork.SoftwarePackages.AddAsync(package, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -40,13 +36,12 @@ public sealed class CreateSoftwarePackageHandler : ICommandHandler<CreateSoftwar
         return Result<CreateSoftwarePackageResponse>.Success(
             new CreateSoftwarePackageResponse
             {
-                Id            = package.Id,
-                Name          = package.Name,
-                Version       = package.Version,
-                InstallerType = package.InstallerType,
-                Status        = package.Status,
-                CreatedAt     = package.CreatedAt
+                Id        = package.Id,
+                Name      = package.Name,
+                Category  = package.Category,
+                Version   = package.Version,
+                CreatedAt = package.CreatedAt
             },
-            "Software package registered successfully.");
+            "Software package uploaded successfully.");
     }
 }

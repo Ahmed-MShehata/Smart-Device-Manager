@@ -6,16 +6,15 @@ namespace SDM.Application.SoftwarePackages.UpdateSoftwarePackage;
 
 /// <summary>
 /// Handles <see cref="UpdateSoftwarePackageCommand"/>.
-/// Updates an existing software package's editable metadata.
+/// Applies metadata-only or metadata + file-replacement update depending on whether
+/// <see cref="UpdateSoftwarePackageCommand.NewSetupFileUrl"/> is provided.
 /// </summary>
 public sealed class UpdateSoftwarePackageHandler : ICommandHandler<UpdateSoftwarePackageCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
 
-    /// <summary>Initializes a new instance of <see cref="UpdateSoftwarePackageHandler"/>.</summary>
     public UpdateSoftwarePackageHandler(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
 
-    /// <inheritdoc/>
     public async Task<Result> Handle(
         UpdateSoftwarePackageCommand command,
         CancellationToken cancellationToken)
@@ -24,18 +23,15 @@ public sealed class UpdateSoftwarePackageHandler : ICommandHandler<UpdateSoftwar
         if (package is null)
             return Result.Failure(Error.NotFound("SoftwarePackage"));
 
-        package.Update(
-            command.Name,
-            command.Version,
-            command.Category,
-            command.Description,
-            command.FilePath,
-            command.SilentInstallCommand,
-            command.DetectionRule,
-            command.SHA256.ToLowerInvariant(),
-            command.Size,
-            command.InstallerType,
-            command.RequiresRestart);
+        // Always update metadata
+        package.UpdateMetadata(command.Name, command.Category, command.Description, command.IconUrl);
+
+        // Replace setup file + version only when a new file was uploaded
+        if (!string.IsNullOrWhiteSpace(command.NewSetupFileUrl) &&
+            !string.IsNullOrWhiteSpace(command.NewVersion))
+        {
+            package.UpdateSetupFile(command.NewSetupFileUrl, command.NewVersion);
+        }
 
         _unitOfWork.SoftwarePackages.Update(package);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
