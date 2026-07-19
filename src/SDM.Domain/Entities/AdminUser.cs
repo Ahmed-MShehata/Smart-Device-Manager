@@ -65,4 +65,11 @@ public class AdminUser : AuditableEntity
     {
         Role = newRole;
     }
+
+    /// <summary>Changes the login username of this administrator.</summary>
+    /// <param name="newUsername">The new unique username. Checked for uniqueness in the handler.</param>
+    public void UpdateUsername(string newUsername)
+    {
+        Username = newUsername;
+    }
 }

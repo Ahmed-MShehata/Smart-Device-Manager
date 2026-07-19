@@ -38,4 +38,12 @@ public interface IFileStorageService
     Task<bool> DeleteAsync(
         string relativePath,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Resolves a relative path (as stored in the database) to an absolute filesystem path.
+    /// Returns <see langword="null"/> if the file does not exist.
+    /// This method must never be called from the Application layer directly —
+    /// only the API/Infrastructure layer may call it to serve file downloads.
+    /// </summary>
+    string? GetAbsolutePath(string relativePath);
 }

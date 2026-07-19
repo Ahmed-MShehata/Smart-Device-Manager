@@ -2,7 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SDM.API.Core;
 using SDM.Application.Common;
+using SDM.Application.Interfaces;
 using SDM.Application.SoftwarePackages.CreateSoftwarePackage;
+using SDM.Application.SoftwarePackages.DeleteSoftwarePackage;
+using SDM.Application.SoftwarePackages.DownloadSoftwarePackage;
 using SDM.Application.SoftwarePackages.GetSoftwarePackage;
 using SDM.Application.SoftwarePackages.GetSoftwarePackages;
 using SDM.Application.SoftwarePackages.UpdateSoftwarePackage;
@@ -11,20 +14,17 @@ namespace SDM.API.Controllers;
 
 /// <summary>
 /// Handles all HTTP requests for Software Package management.
-///
-/// v1.0 endpoints:
-///   GET    /api/v1/software-packages          — Paginated list (anonymous, customer + admin)
-///   GET    /api/v1/software-packages/{id}     — Full detail (anonymous, customer + admin)
-///   POST   /api/v1/software-packages          — Create / upload new package (admin only)
-///   PUT    /api/v1/software-packages/{id}     — Update metadata or replace setup file (admin only)
-///   DELETE /api/v1/software-packages/{id}     — Remove package (admin only)
-///
-/// PackageFile sub-resources were removed in v1.0.
-/// The setup file is managed through the two-phase update workflow on PUT.
-/// See docs/12_API_Contract.md — Section: Software Management APIs.
+/// GET endpoints are anonymous (customer + admin). Write endpoints are admin-only.
 /// </summary>
 public sealed class SoftwarePackagesController : ApiControllerBase
 {
+    private readonly IFileStorageService _fileStorage;
+
+    public SoftwarePackagesController(IFileStorageService fileStorage)
+    {
+        _fileStorage = fileStorage;
+    }
+
     /// <summary>
     /// Retrieves a paginated, filtered, and sorted list of software packages.
     /// Accessible anonymously by both the Customer and Admin applications.
@@ -57,9 +57,39 @@ public sealed class SoftwarePackagesController : ApiControllerBase
     }
 
     /// <summary>
+    /// Downloads the setup file for a software package.
+    /// The internal file path is never exposed — the file is streamed directly.
+    /// Accessible anonymously.
+    /// </summary>
+    [HttpGet("{id:guid}/download")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> DownloadSoftwarePackage(
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(new DownloadSoftwarePackageQuery { Id = id }, cancellationToken);
+
+        if (!result.IsSuccess)
+            return HandleResult(result);
+
+        var absolutePath = _fileStorage.GetAbsolutePath(result.Data!.RelativePath);
+
+        if (absolutePath is null)
+        {
+            return NotFound(new ApiResponse<object>(
+                false,
+                "The setup file is registered but could not be found on the server. Please contact an administrator.",
+                null,
+                [new ApiError("SoftwarePackage.FileMissing", "Setup file not found on disk.")]));
+        }
+
+        return PhysicalFile(absolutePath, result.Data.ContentType, result.Data.FileName);
+    }
+
+    /// <summary>
     /// Creates a new software package entry.
-    /// The setup file URL must be resolved prior to calling this endpoint
-    /// (i.e., uploaded via the file upload endpoint first).
     /// Admin only.
     /// </summary>
     [HttpPost]
@@ -83,10 +113,7 @@ public sealed class SoftwarePackagesController : ApiControllerBase
     }
 
     /// <summary>
-    /// Updates an existing software package.
-    /// Supports two modes:
-    ///   1. Metadata-only — provide Name, Category, Description, optional IconUrl.
-    ///   2. File replacement — additionally provide NewSetupFileUrl and NewVersion.
+    /// Updates an existing software package (metadata and optionally the setup file).
     /// Admin only.
     /// </summary>
     [HttpPut("{id:guid}")]
@@ -114,26 +141,18 @@ public sealed class SoftwarePackagesController : ApiControllerBase
     }
 
     /// <summary>
-    /// Permanently deletes a software package.
+    /// Permanently deletes a software package and its associated setup file.
     /// Admin only.
     /// </summary>
     [HttpDelete("{id:guid}")]
     [Authorize(Policy = Policies.RequireAdmin)]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<ActionResult> DeleteSoftwarePackage(
         [FromRoute] Guid id,
         CancellationToken cancellationToken)
     {
-        // Hard delete: remove the record entirely
-        // If the package has associated orders, the admin should archive instead.
-        var package = await Mediator.Send(new GetSoftwarePackageQuery { Id = id }, cancellationToken);
-        if (!package.IsSuccess)
-            return HandleResult(package);
-
-        // Use UpdateMetadata (no-op) as a proxy for delete — ideally a DeleteSoftwarePackageCommand
-        // will be added in a future iteration. For now return 204 to satisfy the API contract.
-        // TODO: Add DeleteSoftwarePackageCommand in next sprint.
-        return NoContent();
+        var result = await Mediator.Send(new DeleteSoftwarePackageCommand { Id = id }, cancellationToken);
+        return HandleResult(result);
     }
 }

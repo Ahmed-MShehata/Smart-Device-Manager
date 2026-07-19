@@ -10,4 +10,7 @@ public sealed class GetArticlesQuery : IQuery<List<ArticleDto>>
 
     /// <summary>Optional category filter.</summary>
     public string? Category { get; init; }
+
+    /// <summary>Optional search term matched against ProblemName and Description.</summary>
+    public string? Search { get; init; }
 }

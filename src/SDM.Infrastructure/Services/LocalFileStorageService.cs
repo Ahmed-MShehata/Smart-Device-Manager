@@ -109,4 +109,12 @@ internal sealed class LocalFileStorageService : IFileStorageService
 
     private string GetStorageDirectory()
         => Path.Combine(GetWebRoot(), "images", "products");
+
+    /// <inheritdoc/>
+    public string? GetAbsolutePath(string relativePath)
+    {
+        var webRoot  = GetWebRoot();
+        var fullPath = Path.Combine(webRoot, relativePath.Replace('/', Path.DirectorySeparatorChar));
+        return File.Exists(fullPath) ? fullPath : null;
+    }
 }

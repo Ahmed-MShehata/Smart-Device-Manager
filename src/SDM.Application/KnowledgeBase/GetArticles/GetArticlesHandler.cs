@@ -24,6 +24,13 @@ public sealed class GetArticlesHandler : IQueryHandler<GetArticlesQuery, List<Ar
         if (!string.IsNullOrWhiteSpace(query.Category))
             q = q.Where(a => a.Category == query.Category);
 
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            q = q.Where(a =>
+                EF.Functions.Like(a.ProblemName, $"%{query.Search}%") ||
+                EF.Functions.Like(a.Description, $"%{query.Search}%"));
+        }
+
         var articles = await q
             .OrderBy(a => a.DisplayOrder)
             .ThenBy(a => a.ProblemName)
